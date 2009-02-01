@@ -26,6 +26,9 @@ struct nf_mobility{
 };
 
 struct nf_mobility_flow{
+	struct nf_mobility_flow *prev;
+	struct nf_mobility_flow *next;
+
 	__u8 protocol; /* L4 protocol */
 	__be32 saddr;
 	__be32 daddr;
@@ -36,12 +39,17 @@ struct nf_mobility_flow{
 	int is_buffering;
 	int buffered_packets;
 	int buffered_bytes;
-	struct nf_mobility_buffer *buffers;
+	struct nf_mobility_buffer *buffer_head;
+	struct nf_mobility_buffer *buffer_tail;
 
-	struct nf_mobility_hole *holes; /* Linear list for simplicity - may use hash table later */
+	 /* Ordered doubly linked list */
+	struct nf_mobility_hole *holes_head;
+	struct nf_mobility_hole *holes_tail;
 };
 
 struct nf_mobility_buffer{
+	struct nf_mobility_buffer *prev;
+	struct nf_mobility_buffer *next;
 	struct sk_buff* skb;
 	__u32 start_seq;
 	__u32 end_seq;
