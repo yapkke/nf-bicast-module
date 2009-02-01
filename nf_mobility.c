@@ -43,6 +43,144 @@ static void nf_mobility_print_incoming_TCP(__be32 saddr, __be32 daddr, __be16 sp
 	printk(KERN_ALERT "%u    %u\n", saddr, daddr);
 }
 
+/* -------- Flow manipulation -------- */
+static struct nf_mobility_flow * nf_mobility_get_flow(__u8 protocol, __be32 saddr, __be32 daddr, __be16 sport, __be16 dport)
+{
+	struct nf_mobility_flow *flow;
+	
+	for(flow = nfm_flows; flow != NULL; flow = flow->next){
+		if(flow->protocol == protocol &&
+		   flow->saddr == saddr && flow->daddr == daddr && 
+		   flow->sport == sport && flow->dport == dport)
+			return flow;
+	}
+	return NULL;
+}
+
+static struct nf_mobility_flow * nf_mobility_create_flow(__u8 protocol, __be32 saddr, __be32 daddr, __be16 sport, __be16 dport, __u32 start_seq)
+{
+	struct nf_mobility_flow *flow;
+
+	flow = (struct nf_mobility_flow *) kmalloc(sizeof(struct nf_mobility_flow), GFP_ATOMIC);
+
+	
+	if(flow == NULL){
+		printk(KERN_CRITICAL "CRITICAL: Cannot allocate flow in nf_mobility module!");
+		return NULL;
+	}
+	/* Initialize flow control information */
+	flow->protocol = protocol;
+	flow->saddr = saddr;
+	flow->daddr = daddr;
+	flow->sport = sport;
+	flow->dport = dport;
+	flow->head_of_line = start_seq;
+
+	flow->is_buffering = 0;
+	flow->buffered_packets = 0;
+	flow->buffered_bytes = 0;
+	flow->buffer_head = NULL;
+	flow->buffer_tail = NULL;
+
+	flow->holes_head = NULL;
+	flow->holes_tail = NULL;
+
+	/* Link up with nfm_flows (put in beginning) */
+	flow->prev = NULL;
+	flow->next = nfm_flows;
+	if(nfm_flows != NULL)
+		nfm_flows->prev = flow;
+	nfm_flows = flow;
+
+	return flow;
+}
+
+static struct nf_mobility_buffer * nf_mobility_enqueue_packet(struct nf_mobility_flow *flow, __u32 start_seq, __u32 end_seq, struct sk_buff * skb)
+{
+	struct nf_mobility_buffer *new_buffer, buffer;
+
+	new_buffer = (struct nf_mobility_buffer *) kmalloc(sizeof(struct nf_mobility_buffer), GFP_ATOMIC);
+
+
+	if(new_buffer == NULL){
+		printk(KERN_CRITICAL "CRITICAL: Cannot allocate buffer in nf_mobility module!");
+		return NULL;	
+	}
+
+	new_buffer->skb = skb;
+	new_buffer->start_seq = start_seq;
+	new_buffer->end_seq = end_seq;
+
+	/* Insert new buffer into ordered linked list (by start_seq) */
+	if(flow->buffer_head == NULL){ /* && flow->buffer_tail == NULL */
+		flow->buffer_head = flow->buffer_tail = new_buffer;
+		new_buffer->prev = new_buffer->next = NULL;
+	}
+	else{ /* Both buffer_head and buffer_tail of flow not NULL */
+		for(buffer = flow->buffer_head; buffer != NULL; buffer = buffer->next){
+			if(buffer->start_seq > new_buffer->start_seq)
+				break;
+		}
+		if(buffer == NULL){ /* Insert at tail */
+			new_buffer->next = NULL;
+			new_buffer->prev = flow->buffer_tail;
+			flow->buffer_tail->next = new_buffer;
+			flow_buffer_tail = new_buffer;
+		}
+		else{
+			new_buffer->next = buffer;
+			new_buffer->prev = buffer->prev;
+			buffer->prev->next = new_buffer;
+			buffer->prev = new_buffer;
+		}
+	}
+
+	return new_buffer;
+}
+
+/* -------- Hole manipulation -------- */
+static struct nf_mobility_hole * nf_mobility_create_hole(struct nf_mobility_flow *flow, struct sk_buff *skb, __u32 packet_start_seq)
+{
+	__u32 start_seq = flow->head_of_line;
+	__u32 end_seq = packet_start_seq - 1;
+
+	struct nf_mobility_hole *new_hole;
+	
+	new_hole = (struct nf_mobility_hole *) kmalloc(sizeof(struct nf_mobility_hole), GFP_ATOMIC);
+	
+	if(new_hole == NULL){
+		printk(KERN_CRITICAL "CRITICAL: Cannot allocate hole in nf_mobility module!");
+		return NULL;
+	}
+	
+	new_hole->start_seq = start_seq;
+	new_hole->end_seq = end_seq;
+
+	/* Insert hole at end of list */
+	new_hole->next = NULL;
+	new_hole->prev = flow->holes_tail;
+	if(flow->holes_tail != NULL) /* && flow->holes_head != NULL */
+		flows->holes_tail->next = new_hole;
+	else
+		flows->holes_head = new_hole;
+	flows->holes_tail = new_hole;
+}
+
+static int nf_mobility_match_and_fill_hole(flow, start_seq, end_seq)
+{
+	if(flow->holes_head == NULL) return NF_MOBILITY_MATCH_NO_HOLE;
+
+	struct nf_mobility_hole *hole;
+
+	for(hole = flows->holes_head; hole != NULL; hole = hole->next){
+		/* TODO: Match, fill and split holes */
+	}
+
+	return NF_MOBILITY_MATCH_NO_HOLE;
+}
+
+/* -------- Packet delivery -------- */
+
 static void nf_mobility_deliver_packet(struct sk_buff* skb, int (*ref_fn)(struct sk_buff *) )
 {
 	ref_fn(skb);	
@@ -56,23 +194,37 @@ static int nf_mobility_should_deliver_buffer(struct nf_mobility_flow *flow)
 static void nf_mobility_deliver_buffered_upto(struct nf_mobility_flow *flow, struct nf_mobility_buffer *stop_buffer, int (*ref_fn)(struct sk_buff *)){
 	struct nf_mobility_buffer *buffer, *next_buffer;
 	
-	buffer = flow->buffers; 
+	buffer = flow->buffer_head; 
 	while(buffer != NULL && buffer != stop_buffer){
 		/* Actual delivery of packet to layer 4 */
 		nf_mobility_deliver_packet(buffer->skbi, ref_fn);
 		next_buffer = buffer->next;
 		kfree(buffer);
 	}
-	flow->buffers = buffer;
+	flow->buffer_head = buffer;
+	if(flow->buffer_head == NULL){
+		flow->buffer_tail = NULL;
+		/* TODO: Should we add in the condition that no holes exist before turning off buffering? Need some flag for this part
+		 * e.g.
+		 *
+		 * if( ! (nfm->multi_buffering
+		 * */
+		
+		is_buffering = 0;
+	}
 	
 	return;
 }
 
-static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, struct sk_buff *skb, int (*ref_fn)(struct sk_buff *))
+static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, __u32 start_seq, __u32 end_seq, struct sk_buff *skb, int (*ref_fn)(struct sk_buff *))
 {
 	if(flow->is_buffering){
 		/* Queue up packet */
-		nf_mobility_enqueue_packet(flow, skb);
+		/* TODO: What if queueing failed (memory shortage)?
+		 * Need to do something more than just simply returning NF_ACCEPT
+		 * e.g. may have to deliver buffered packets too */
+		if(nf_mobility_enqueue_packet(flow, start_seq, end_seq, skb) == NULL)
+			return NF_ACCEPT;
 	}
 
 	/* Check if need to deliver out-of-order packets */
@@ -83,27 +235,24 @@ static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, struc
 	return NF_STOLEN;
 }
 
+/* -------- Netfilter hook (main function) -------- */
 static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, const struct net_device *in, const struct net_device *out, int (*ref_fn)(struct sk_buff *))
 {
 	int users = atomic_read(&(skb->users));
 	//printk(KERN_ALERT "Accepting packet! skb->users = %d\n", users);
 	
 	struct iphdr *iph;
-	__be32 saddr;
-	__be32 daddr;
+	__be32 saddr, daddr;
 	struct tcphdr *tcph;
-	__be16 sport;
-	__be16 dport;
-	__u32 start_seq;
-	__u32 end_seq;
-	__u32 ack_seq;
-	__u32 packet_length;
+	__be16 sport, dport;
+	__u32 start_seq, end_seq, ack_seq, packet_length;
 
         iph = ip_hdr(skb);
 	if(iph->protocol != IPPROTO_TCP){
 		return NF_ACCEPT;
 	}
 
+	/* ---- Get packet info ---- */
 	saddr = ntohl(iph->saddr);
 	daddr = ntohl(iph->daddr);
 	tcph = (struct tcphdr*)(skb->data + sizeof(struct iphdr));
@@ -116,21 +265,24 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport);
 	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
 
-	/**** Process packet ****/
+	/* ---- Process packet ---- */
 	struct nf_mobility_flow *flow;
 	unsigned int ret = NF_ACCEPT;
 	write_lock_bh(&(nfm->flow_lock));
 
 	/* Get flow entry, create one if necessary */
-	flow = nf_mobility_get_flow(saddr, daddr, sport, dport);
+	flow = nf_mobility_get_flow(protocol, saddr, daddr, sport, dport);
 	if(flow == NULL){
-		nf_mobility_create_flow(saddr, daddr, sport, dport, start_seq);
+		flow = nf_mobility_create_flow(protocol, saddr, daddr, sport, dport, start_seq);
+		if(flow == NULL){
+			goto nfm_unlock;
+		}
 	}
 
 	/* Packet falls on head of line */
 	if(start_seq == flow->head_of_line){
 		head_of_line = end_seq + 1;
-		ret = nf_mobility_try_deliever(flow, skb, ref_fn);
+		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 		else{
 			/* Update head of line and deliver packet */
 			head_of_line = end_seq+1;
@@ -148,7 +300,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 				/* Check for in-order packets for delivery */
 				struct nf_mobility_buffer *buffer;
 				struct nf_mobility_hole *hole;
-				if(flows->buffers == NULL){
+				if(flow->buffer_head == NULL){
 					printk(KERN_ALERT "Filled first hole, but out-of-order packets already delivered.\n");
 					break;
 				}
@@ -158,8 +310,8 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 					break;
 				}
 
-				buffer = flow->buffers;
-				hole = flow->holes;
+				buffer = flow->buffer_head;
+				hole = flow->holes_head;
 
 				while(buffer != NULL){
 					if(buffer->start_seq > hole->start_seq)
@@ -171,7 +323,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 
 			case NF_MOBILITY_MATCH_OTHER_HOLE:
 				/* Try to deliver out-of-order packet */
-				nf_mobility_try_deliver(flow, skb, ref_fn);
+				nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 				break;
 
 			case NF_MOBILITY_MATCH_NO_HOLE:
@@ -183,10 +335,14 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		}
 		
 	}
-	else{	/* Packet creates a hole (behind head of line) */
-		
+	else{	/* Packet creates a hole (after head of line) */
+		flow->head_of_line = end_seq+1; /* Update head of line */
+		if(nf_mobility_create_hole(flow, skb, start_seq) != NULL){
+			flow->is_buffering = 1; /* Turn on buffering due to hole */
+			nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
+		}
 	}
-
+nfm_unlock:
 	write_unlock_bh(&(nfm->flow_lock));
 	return ret;
 }
