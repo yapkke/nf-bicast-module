@@ -385,9 +385,16 @@ static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, __u32
 		if(nf_mobility_enqueue_packet(flow, start_seq, end_seq, skb) == NULL)
 			return NF_ACCEPT;
 	}
+	else{
+if(NFM_DEBUG)
+printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()");
+		nf_mobility_deliver_packet(skb, ref_fn);
+	}
 
 	/* Check if need to deliver out-of-order packets */
 	if(nf_mobility_should_deliver_buffer(flow)){
+if(NFM_DEBUG)
+printk(KERN_ALERT "Delivering buffered packets in nf_mobility_try_deliver()");
 		nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 	}
 	// NF_STOLEN is used to make sure the Netfilter framework doesn't 
@@ -432,7 +439,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	end_seq = start_seq + tcph->syn + tcph->fin + skb->len - sizeof(struct iphdr) - tcph->doff * 4 - 1;
 	ack_seq = ntohl(tcph->ack_seq);
 	packet_length = end_seq - start_seq + 1;
-	nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
+	//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
 	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
 
 	if(packet_length <= 0) /* Packet without data, e.g. FIN packet */
@@ -455,11 +462,6 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		printk(KERN_ALERT "HOL = %u\n", flow->head_of_line);
 	}
 
-	printk(KERN_ALERT "Before delivery\n");
-	nf_mobility_deliver_packet(skb, ref_fn);
-	printk(KERN_ALERT "After delivery\n");
-	write_unlock_bh(&(nfm->flow_lock));
-	return NF_STOLEN;
 
 	/* Packet falls on head of line */
 	if(start_seq == flow->head_of_line){
@@ -467,6 +469,15 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		// Try to deliver buffered packets (holes might have held up packets)
 		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 	}
+else{
+printk(KERN_ALERT "Before delivery\n");
+nf_mobility_deliver_packet(skb, ref_fn);
+printk(KERN_ALERT "After delivery\n");
+}
+write_unlock_bh(&(nfm->flow_lock));
+	return NF_STOLEN;
+
+	if(false){}
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
 	else if(start_seq < flow->head_of_line){ 

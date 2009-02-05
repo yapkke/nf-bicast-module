@@ -17,6 +17,9 @@
 #define NF_MOBILITY_MATCH_OTHER_HOLE 0x20
 #define NF_MOBILITY_MATCH_NO_HOLE    0x40
 
+/* DEBUGGING */
+#define NFM_DEBUG 1
+
 struct nf_mobility_buffer;
 struct nf_mobility_hole;
 
