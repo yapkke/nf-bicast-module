@@ -1,4 +1,4 @@
-#include <linux/module.h>
+include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/netfilter_ipv4.h>
@@ -174,6 +174,8 @@ static int nf_mobility_match_and_fill_hole(flow, start_seq, end_seq)
 
 	for(hole = flows->holes_head; hole != NULL; hole = hole->next){
 		/* TODO: Match, fill and split holes */
+		if(hole->end_seq >= start_seq){
+		}
 	}
 
 	return NF_MOBILITY_MATCH_NO_HOLE;
