@@ -462,7 +462,8 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 			case NF_MOBILITY_MATCH_FIRST_HOLE:
 				/* Deliver this packet */
 				nf_mobility_deliver_packet(skb, ref_fn);
-				
+				ret = NF_STOLEN; // Ask Netfilter framework to ignore this packet
+
 				/* Check for in-order packets for delivery */
 				if(flow->buffer_head == NULL){
 					printk(KERN_ALERT "Filled first hole, but out-of-order packets already delivered.\n");
@@ -487,7 +488,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 
 			case NF_MOBILITY_MATCH_OTHER_HOLE:
 				/* Try to deliver out-of-order packet */
-				nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
+				ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 				break;
 
 			case NF_MOBILITY_MATCH_NO_HOLE:
@@ -504,7 +505,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		// starting sequence number
 		if(nf_mobility_create_and_append_hole(flow, flow->head_of_line, start_seq-1) != NULL){
 			flow->is_buffering = 1; /* Turn on buffering due to hole */
-			nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
+			ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 		}
 		flow->head_of_line = end_seq + 1; /* Update head of line */
 	}
