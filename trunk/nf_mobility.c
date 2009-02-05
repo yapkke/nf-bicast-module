@@ -435,6 +435,9 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
 	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
 
+	if(packet_length <= 0) /* Packet without data, e.g. FIN packet */
+		return NF_ACCEPT;
+
 	/* ---- Process packet ---- */
 	ret = NF_ACCEPT;
 	write_lock_bh(&(nfm->flow_lock));
@@ -447,7 +450,16 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 			ret = NF_ACCEPT;
 			goto nfm_unlock;
 		}
+		printk(KERN_ALERT "New flow: ");
+		nf_mobility_print_incoming_TCP(flow->saddr, flow->daddr, flow->sport, flow->dport);
+		printk(KERN_ALERT "HOL = %u\n", flow->head_of_line);
 	}
+
+	printk(KERN_ALERT "Before delivery\n");
+	nf_mobility_deliver_packet(skb, ref_fn);
+	printk(KERN_ALERT "After delivery\n");
+	write_unlock_bh(&(nfm->flow_lock));
+	return NF_STOLEN;
 
 	/* Packet falls on head of line */
 	if(start_seq == flow->head_of_line){
@@ -514,6 +526,39 @@ nfm_unlock:
 	return ret;
 }
 
+/**
+ * Cleans up all memory used by the module
+ */
+static void nf_mobility_cleanup(void)
+{
+	struct nf_mobility_flow *flow, *next_flow;
+	struct nf_mobility_buffer *buffer, *next_buffer;
+	struct nf_mobility_hole *hole, *next_hole;
+
+	printk(KERN_ALERT "Freeing memory...\n");
+	write_lock_bh(&(nfm->flow_lock));	
+	/* For each flow */
+	for(flow = nfm_flows; flow != NULL; flow = next_flow){
+		next_flow = flow->next;
+		/* For each buffer */
+		for(buffer = flow->buffer_head; buffer != NULL; buffer = next_buffer){
+			next_buffer = buffer->next;
+			kfree(buffer);
+		}
+		/* For each hole */
+		for(hole = flow->holes_head; hole != NULL; hole = next_hole){
+			next_hole = hole->next;
+			kfree(hole);
+		}
+		kfree(flow);
+	}
+	write_unlock_bh(&(nfm->flow_lock));
+
+	kfree(nfm);
+
+	printk(KERN_ALERT "Done!\n");
+}
+
 
 static struct nf_hook_ops nf_mobility_ops __read_mostly =
 {
@@ -551,6 +596,8 @@ static int __init nf_mobility_init(void)
 static void __exit nf_mobility_exit(void)
 {
 	printk(KERN_ALERT "Removing nf-mobility module\n");
+	// Free memory
+	nf_mobility_cleanup();
 	nf_unregister_hook(&nf_mobility_ops);
 }
 
