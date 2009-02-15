@@ -10,7 +10,7 @@
 #define NF_MOBILITY_MODE_HOOLOCK 0x02 /* Future development */
 
 #define NF_MOBILITY_DEFAULT_NUM_BUFFER_PACKETS 5
-#define NF_MOBILITY_DEFAULT_NUM_BUFFER_BYTES 5000
+#define NF_MOBILITY_DEFAULT_NUM_BUFFER_BYTES 300
 
 /* Hole-matching results */
 #define NF_MOBILITY_MATCH_FIRST_HOLE 0x10
@@ -39,6 +39,7 @@ struct nf_mobility_flow{
 	__be32 daddr;
 	__be16 sport;
 	__be16 dport;
+	__u32 dupe_check_start_seq; /* Starting sequence number to check for dupes */
 	__u32 head_of_line; /* Latest sequence number received */
 
 	int is_buffering;
@@ -66,6 +67,8 @@ struct nf_mobility_hole{
 	__u32 start_seq;
 	__u32 end_seq;
 };
+
+static void nf_mobility_remove_holes(struct nf_mobility_flow *flow);
 
 #endif
 
