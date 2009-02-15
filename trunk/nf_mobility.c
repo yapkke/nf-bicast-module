@@ -17,7 +17,7 @@
  * Module parameters
  */
 static unsigned int nfm_num_buffer_packets = 0; /* Maximum buffered packets */
-static unsigned int nfm_num_buffer_bytes = 0;  /* Maximum buffered bytes */
+static unsigned int nfm_num_buffer_bytes = 3000;  /* Maximum buffered bytes */
 static int nfm_is_buffer_packets = 0; /* By default, buffer */
 static int nfm_is_buffer_bytes = 1; 
 
@@ -78,6 +78,7 @@ static struct nf_mobility_flow * nf_mobility_create_flow(__u8 protocol, __be32 s
 	flow->daddr = daddr;
 	flow->sport = sport;
 	flow->dport = dport;
+	flow->dupe_check_start_seq = start_seq;
 	flow->head_of_line = start_seq;
 
 	flow->is_buffering = 0;
@@ -120,6 +121,12 @@ static struct nf_mobility_buffer * nf_mobility_enqueue_packet(struct nf_mobility
 		printk(KERN_ALERT "CRITICAL: Cannot allocate buffer in nf_mobility module!");
 		return NULL;
 	}
+
+	(flow->buffered_packets)++;
+	flow->buffered_bytes += end_seq - start_seq + 1;
+
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Buffered packets = %d, bytes = %d\n", flow->buffered_packets, flow->buffered_bytes);
 
 	new_buffer->skb = skb;
 	new_buffer->start_seq = start_seq;
@@ -251,32 +258,48 @@ static void nf_mobility_remove_hole(struct nf_mobility_flow *flow, struct nf_mob
  */
 static int nf_mobility_match_and_fill_holes(struct nf_mobility_flow *flow, __u32 start_seq, __u32 end_seq)
 {
-	struct nf_mobility_hole *hole, *next_hole, *new_hole;
+	struct nf_mobility_hole *hole, *next_hole, *new_hole, *holes_head;
 	int matched_first;
-	if(flow->holes_head == NULL) return NF_MOBILITY_MATCH_NO_HOLE;
-	if(flow->holes_head->start_seq > end_seq || flow->holes_tail->end_seq < start_seq)
-		return NF_MOBILITY_MATCH_NO_HOLE;
 
-	/* Preprocess the match_first indicator */
-	if(flow->holes_head->start_seq >= start_seq && flow->holes_head->end_seq <= end_seq)
+	holes_head = flow->holes_head;
+
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Start hole match for packet (%d, %d).\n", start_seq, end_seq);
+	/* No hole to match against */
+	if(holes_head == NULL){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "No hole, returning.\n");
+		return NF_MOBILITY_MATCH_NO_HOLE;
+	}
+
+	/* Packet's range is outside (before or after) all possible hole ranges */
+	if(holes_head->start_seq > end_seq || flow->holes_tail->end_seq < start_seq){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Packet out of range, returning.\n");
+		return NF_MOBILITY_MATCH_NO_HOLE;
+}
+
+	/* Preprocess the match_first indicator 
+	 * i.e., check if the first hole in the list will match the packet */
+	if(holes_head->start_seq >= start_seq)
 		matched_first = 1;
 	else matched_first = 0;
 
 	/* Find the first hole that may match packet (skip all the holes 
 	 * that are entirely to the left of the packet's starting sequence number */
-	for(hole = flow->holes_head; hole != NULL; hole = hole->next){
+	for(hole = holes_head; hole != NULL; hole = hole->next){
 		if(hole->end_seq >= start_seq)
 			break;
 	}
 
-	/* No match if
-	 * 1. Packet lies to the right of all holes or
-	 * 2. Packet is between two holes */
-	if(hole == NULL || hole->start_seq > end_seq)
+	/* No match if packet is between two holes */
+	if(hole->start_seq > end_seq)
 		return NF_MOBILITY_MATCH_NO_HOLE;
 
 	/* Check if the hole contains packet but not with completely same range */
 	if(hole->start_seq < start_seq && hole->end_seq > end_seq){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Spliting hole, (%d, %d) -> (%d, %d) + (%d, %d) ,then returning.\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq - 1, end_seq + 1, hole->end_seq);
 		/* Split hole into two by
 		 * 1. Shrinking left portion
 		 * 2. Create new hole for right portion */
@@ -295,14 +318,22 @@ static int nf_mobility_match_and_fill_holes(struct nf_mobility_flow *flow, __u32
 		return NF_MOBILITY_MATCH_OTHER_HOLE;
 	}
 
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Checking for packet-from-right overlap.\n");
 	/* Possible partial overlap from the right (beginning of packet overlaps 
 	 * ending of hole) */
 	if(hole->start_seq < start_seq){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Shrink hole (%d, %d) -> (%d, %d)\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq-1);
 		/* Shrink hole */
 		hole->end_seq = start_seq - 1;
 		hole = hole->next; /* This hole already processed */	
 	}
 
+if(NFM_DEBUG_HOLE){
+if(hole != NULL) printk(KERN_ALERT "Before checking complete overlap, cur hole = (%d, %d).\n", hole->start_seq, hole->end_seq);
+else printk(KERN_ALERT "Before checking complete overlap, no more holes.\n"); 
+}
 	/* Process holes whose ranges are contained within packet's range
 	 * 
 	 * Note: At this point, all remaining holes have the property
@@ -312,20 +343,27 @@ static int nf_mobility_match_and_fill_holes(struct nf_mobility_flow *flow, __u32
 	for( ; hole != NULL; hole = next_hole){
  		/* Save the next hole since the current one may be removed */
 		next_hole = hole->next;
-		if(hole->end_seq > end_seq){ /* No more overlap */
+		if(hole->end_seq > end_seq){ /* No more complete overlap or containment */
 			break;
 		}
+		/* Remove completely overlapped hole (links updated automatically) */
 		nf_mobility_remove_hole(flow, hole);
 	}
 
+if(NFM_DEBUG_HOLE){
+if(hole != NULL) printk(KERN_ALERT "After checking complete overlap, cur hole = (%d, %d).\n", hole->start_seq, hole->end_seq);
+else  printk(KERN_ALERT "After checking complete overlap, no more holes.\n");
+}
 	/* Possible partial overlap from the left (ending of packet overlaps 
-	 * beginning of hole */
+	 * beginning of hole) */
 	if(hole != NULL && hole->start_seq <= end_seq){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Shrinking hole from left (%d, %d) -> (%d, %d)", hole->start_seq, hole->end_seq, end_seq + 1, hole->end_seq);
 		/* Shrink hole */
 		hole->start_seq = end_seq + 1;
 	}
 
-	return (matched_first?NF_MOBILITY_MATCH_FIRST_HOLE:NF_MOBILITY_MATCH_OTHER_HOLE);
+	return (matched_first ? NF_MOBILITY_MATCH_FIRST_HOLE : NF_MOBILITY_MATCH_OTHER_HOLE);
 }
 
 /* -------- Packet delivery -------- */
@@ -370,15 +408,6 @@ static void nf_mobility_deliver_buffer_upto(struct nf_mobility_flow *flow, struc
 	// If there are no buffers left...
 	if(flow->buffer_head == NULL){
 		flow->buffer_tail = NULL;
-		/* TODO: Should we add in the condition that no holes exist before turning off buffering? Need some flag for this part
-		 * e.g.
-		 *
-		 * if( ! (nfm->multi_buffering ....))
-		 *
-		 * Right now, we just assume we don't have to buffer even when there're holes
-		 * */
-		// if(flow->holes_head == NULL)
-		flow->is_buffering = 0;
 	}
 	
 	return;
@@ -391,8 +420,10 @@ static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, __u32
 		/* TODO: What if queueing failed (memory shortage)?
 		 * Need to do something more than just simply returning NF_ACCEPT
 		 * e.g. may have to deliver buffered packets too */
-		if(nf_mobility_enqueue_packet(flow, start_seq, end_seq, skb) == NULL)
+		if(nf_mobility_enqueue_packet(flow, start_seq, end_seq, skb) == NULL){
+			printk(KERN_ALERT "WaRNING: Cannot enqueue packet, accepting it.\n");
 			return NF_ACCEPT;
+		}
 	}
 	else{
 if(NFM_DEBUG && (nfm_pc % 10 == 0))
@@ -402,9 +433,19 @@ printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()\n");
 
 	/* Check if need to deliver out-of-order packets */
 	if(nf_mobility_should_deliver_buffer(flow)){
-if(NFM_DEBUG && (nfm_pc % 10 == 0))
-printk(KERN_ALERT "Delivering buffered packets in nf_mobility_try_deliver()\n");
+		printk(KERN_ALERT "Delivering all buffered packets in nf_mobility_try_deliver()\n");
 		nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
+		
+		// Turn off buffering and
+		// ignore existing holes - can't do reordering perfectly
+		// TCP will handle the (rare) incoming out-of-order packets even after buffering
+		flow->is_buffering = 0;
+		flow->buffered_packets = 0;
+		flow->buffered_bytes = 0;
+		// Remove holes
+		nf_mobility_remove_holes(flow);
+		// Update start seq for checking dupes
+		flow->dupe_check_start_seq = flow->head_of_line;
 	}
 	// NF_STOLEN is used to make sure the Netfilter framework doesn't 
 	// process the packet
@@ -480,6 +521,10 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		flow->head_of_line = end_seq + 1; // Update head of line
 		// Try to deliver buffered packets (holes might have held up packets)
 		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
+	}
+	/* Old packet - let TCP handle it */
+	else if(end_seq < flow->dupe_check_start_seq){
+		ret = NF_ACCEPT;
 	}
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
@@ -559,6 +604,21 @@ nfm_unlock:
 	return ret;
 }
 
+
+/**
+ * Clears all holes of a given flow
+ */
+void nf_mobility_remove_holes(struct nf_mobility_flow *flow){
+	struct nf_mobility_hole *hole, *next_hole;
+	/* For each hole */
+	for(hole = flow->holes_head; hole != NULL; hole = next_hole){
+		next_hole = hole->next;
+		kfree(hole);
+	}
+	/* Reset head and tail pointers */
+	flow->holes_head = flow->holes_tail = NULL;
+}
+
 /**
  * Cleans up all memory used by the module
  */
@@ -566,7 +626,6 @@ static void nf_mobility_cleanup(void)
 {
 	struct nf_mobility_flow *flow, *next_flow;
 	struct nf_mobility_buffer *buffer, *next_buffer;
-	struct nf_mobility_hole *hole, *next_hole;
 
 	printk(KERN_ALERT "Freeing memory...\n");
 	write_lock_bh(&(nfm->flow_lock));	
@@ -578,11 +637,7 @@ static void nf_mobility_cleanup(void)
 			next_buffer = buffer->next;
 			kfree(buffer);
 		}
-		/* For each hole */
-		for(hole = flow->holes_head; hole != NULL; hole = next_hole){
-			next_hole = hole->next;
-			kfree(hole);
-		}
+		nf_mobility_remove_holes(flow);
 		kfree(flow);
 	}
 	write_unlock_bh(&(nfm->flow_lock));
@@ -622,6 +677,9 @@ static int __init nf_mobility_init(void)
 		nfm_is_buffer_bytes = 1;
 		nfm_num_buffer_bytes = NF_MOBILITY_DEFAULT_NUM_BUFFER_BYTES;
 	}
+	
+	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
+	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_is_buffer_bytes, nfm_is_buffer_bytes);
 
 	return nf_register_hook(&nf_mobility_ops);
 }
