@@ -21,6 +21,10 @@ static unsigned int nfm_num_buffer_bytes = 0;  /* Maximum buffered bytes */
 static int nfm_is_buffer_packets = 0; /* By default, buffer */
 static int nfm_is_buffer_bytes = 1; 
 
+// Debugging
+static unsigned int nfm_pc = 0;
+static unsigned int nfm_dupe_count = 0;
+
 /**
  * Variables used only in this module
  *
@@ -211,19 +215,24 @@ static void nf_mobility_remove_hole(struct nf_mobility_flow *flow, struct nf_mob
 		printk(KERN_ALERT "WARNING: Trying to remove hole from empty list.\n");
 		return;
 	}
-
+	
+	// Different positions of hole to be removed
 	if(flow->holes_head == hole && flow->holes_tail == hole){
+		// Only hole in the list
 		flow->holes_head = flow->holes_tail = NULL;
 	}
 	else if(flow->holes_head == hole){
+		// At list head
 		hole->next->prev = NULL;
 		flow->holes_head = hole->next;
 	}
 	else if(flow->holes_tail == hole){
+		// At list tail
 		hole->prev->next = NULL;
 		flow->holes_tail = hole->prev;
 	}
 	else{
+		// In the middle
 		hole->prev->next = hole->next;
 		hole->next->prev = hole->prev;
 	}
@@ -386,21 +395,22 @@ static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, __u32
 			return NF_ACCEPT;
 	}
 	else{
-if(NFM_DEBUG)
-printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()");
+if(NFM_DEBUG && (nfm_pc % 10 == 0))
+printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()\n");
 		nf_mobility_deliver_packet(skb, ref_fn);
 	}
 
 	/* Check if need to deliver out-of-order packets */
 	if(nf_mobility_should_deliver_buffer(flow)){
-if(NFM_DEBUG)
-printk(KERN_ALERT "Delivering buffered packets in nf_mobility_try_deliver()");
+if(NFM_DEBUG && (nfm_pc % 10 == 0))
+printk(KERN_ALERT "Delivering buffered packets in nf_mobility_try_deliver()\n");
 		nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 	}
 	// NF_STOLEN is used to make sure the Netfilter framework doesn't 
 	// process the packet
 	return NF_STOLEN;
 }
+
 
 /* -------- Netfilter hook (main function) -------- */
 static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, const struct net_device *in, const struct net_device *out, int (*ref_fn)(struct sk_buff *))
@@ -440,7 +450,9 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	ack_seq = ntohl(tcph->ack_seq);
 	packet_length = end_seq - start_seq + 1;
 	//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
-	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
+//nfm_pc++;
+//if(nfm_pc % 10 == 0)
+//	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
 
 	if(packet_length <= 0) /* Packet without data, e.g. FIN packet */
 		return NF_ACCEPT;
@@ -469,18 +481,10 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		// Try to deliver buffered packets (holes might have held up packets)
 		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 	}
-else{
-printk(KERN_ALERT "Before delivery\n");
-nf_mobility_deliver_packet(skb, ref_fn);
-printk(KERN_ALERT "After delivery\n");
-}
-write_unlock_bh(&(nfm->flow_lock));
-	return NF_STOLEN;
-
-	if(false){}
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
 	else if(start_seq < flow->head_of_line){ 
+printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 		switch(nf_mobility_match_and_fill_holes(flow, start_seq, end_seq)){
 			case NF_MOBILITY_MATCH_FIRST_HOLE:
 				/* Deliver this packet */
@@ -516,6 +520,13 @@ write_unlock_bh(&(nfm->flow_lock));
 
 			case NF_MOBILITY_MATCH_NO_HOLE:
 				/* Is duplicate packet, drop it */
+//printk(KERN_ALERT "Dropping duplicate\n");
+if(NFM_DEBUG_DUPE){
+nfm_dupe_count++;
+if(nfm_dupe_count % 50 == 0)
+printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
+}
+
 				ret = NF_DROP;
 				break;
 			default:
@@ -523,6 +534,17 @@ write_unlock_bh(&(nfm->flow_lock));
 		}
 		
 	}
+/*
+else{
+if(NFM_DEBUG_HOLE) printk(KERN_ALERT "Delivering hole packet\n");
+nf_mobility_deliver_packet(skb, ref_fn);
+if(NFM_DEBUG_HOLE) printk(KERN_ALERT "After delivery\n");
+}
+write_unlock_bh(&(nfm->flow_lock));
+	return NF_STOLEN;
+
+	if(false){}
+*/	
 	else{	/* Packet creates a hole after head of line (i.e. start_seq > flow->head_of_line) */
 		// Hole spans sequence numbers from head of line up to the byte before the packet's
 		// starting sequence number
