@@ -433,7 +433,7 @@ printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()\n");
 
 	/* Check if need to deliver out-of-order packets */
 	if(nf_mobility_should_deliver_buffer(flow)){
-		printk(KERN_ALERT "Delivering all buffered packets in nf_mobility_try_deliver()\n");
+//printk(KERN_ALERT "Delivering all buffered packets in nf_mobility_try_deliver()\n");
 		nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 		
 		// Turn off buffering and
@@ -679,7 +679,7 @@ static int __init nf_mobility_init(void)
 	}
 	
 	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
-	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_is_buffer_bytes, nfm_is_buffer_bytes);
+	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
 
 	return nf_register_hook(&nf_mobility_ops);
 }
