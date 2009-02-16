@@ -126,7 +126,7 @@ static struct nf_mobility_buffer * nf_mobility_enqueue_packet(struct nf_mobility
 	flow->buffered_bytes += end_seq - start_seq + 1;
 
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Buffered packets = %d, bytes = %d\n", flow->buffered_packets, flow->buffered_bytes);
+printk(KERN_ALERT "Buffered packets = %d, bytes = %d, newest = (%d, %d)\n", flow->buffered_packets, flow->buffered_bytes, start_seq, end_seq);
 
 	new_buffer->skb = skb;
 	new_buffer->start_seq = start_seq;
@@ -524,6 +524,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	}
 	/* Old packet - let TCP handle it */
 	else if(end_seq < flow->dupe_check_start_seq){
+printk(KERN_ALERT "Old packet, let TCP handle\n");
 		ret = NF_ACCEPT;
 	}
 	/* Packet behind head of line, check if it is a duplicate
@@ -542,7 +543,7 @@ printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 					break;
 				}
 				else if(flow->holes_head == NULL){
-					printk(KERN_ALERT "Filled first (and only) hole, delivering out-of-order packets");
+					printk(KERN_ALERT "Filled first (and only) hole, delivering out-of-order packets\n");
 					nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 					break;
 				}
