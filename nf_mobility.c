@@ -452,6 +452,18 @@ printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()\n");
 	return NF_STOLEN;
 }
 
+/**
+ * Delivery by timeout
+ */
+void nf_mobility_timer_delivery(unsigned long x){
+	printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
+	init_timer(&(nfm_delivery_timer));
+	(nfm_delivery_timer).expires = jiffies + HZ;
+	(nfm_delivery_timer).data	 = 0;
+	(nfm_delivery_timer).function = nf_mobility_timer_delivery;
+	add_timer(&(nfm_delivery_timer));
+}
+
 
 /* -------- Netfilter hook (main function) -------- */
 static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, const struct net_device *in, const struct net_device *out, int (*ref_fn)(struct sk_buff *))
@@ -643,6 +655,10 @@ static void nf_mobility_cleanup(void)
 	}
 	write_unlock_bh(&(nfm->flow_lock));
 
+	// Cancel timer
+	if(timer_pending(&(nfm_delivery_timer)))
+		del_timer(&(nfm_delivery_timer));
+
 	kfree(nfm);
 
 	printk(KERN_ALERT "Done!\n");
@@ -681,6 +697,14 @@ static int __init nf_mobility_init(void)
 	
 	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
 	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
+	
+	// Timer test code
+	printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
+	init_timer(&(nfm_delivery_timer));
+	(nfm_delivery_timer).expires = jiffies + HZ;
+	(nfm_delivery_timer).data	 = 0;
+	(nfm_delivery_timer).function = nf_mobility_timer_delivery;
+	add_timer(&(nfm_delivery_timer));
 
 	return nf_register_hook(&nf_mobility_ops);
 }
