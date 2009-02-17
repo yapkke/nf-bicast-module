@@ -13,6 +13,9 @@
 #define NF_MOBILITY_DEFAULT_NUM_BUFFER_PACKETS 5
 #define NF_MOBILITY_DEFAULT_NUM_BUFFER_BYTES 300
 
+// By default, timeout every 4 jiffies
+#define NF_MOBILITY_DEFAULT_TIMEOUT 4
+
 /* Hole-matching results */
 #define NF_MOBILITY_MATCH_FIRST_HOLE 0x10
 #define NF_MOBILITY_MATCH_OTHER_HOLE 0x20
@@ -35,6 +38,7 @@ struct nf_mobility{
 	int mode;
 	int status; // On, off, etc.
 	rwlock_t flow_lock;	
+	int (*ref_fn)(struct sk_buff *); // For timer delivery function
 };
 
 struct nf_mobility_flow{
@@ -51,13 +55,16 @@ struct nf_mobility_flow{
 
 	int is_buffering;
 	int buffered_packets;
-	int buffered_bytes;
+	__u32 buffered_bytes;
 	struct nf_mobility_buffer *buffer_head;
 	struct nf_mobility_buffer *buffer_tail;
 
 	 /* Ordered doubly linked list */
 	struct nf_mobility_hole *holes_head;
 	struct nf_mobility_hole *holes_tail;
+
+	 /* Debugging */
+	int num_holes;
 };
 
 struct nf_mobility_buffer{
@@ -66,6 +73,8 @@ struct nf_mobility_buffer{
 	struct sk_buff* skb;
 	__u32 start_seq;
 	__u32 end_seq;
+	
+	long unsigned int timestamp; /* For timeout delivery */
 };
 
 struct nf_mobility_hole{
@@ -76,6 +85,7 @@ struct nf_mobility_hole{
 };
 
 static void nf_mobility_remove_holes(struct nf_mobility_flow *flow);
+static void nf_mobility_start_delivery_timer(unsigned long int start_jiffies);
 static void nf_mobility_timer_delivery(unsigned long x);
 
 #endif

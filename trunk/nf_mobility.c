@@ -20,6 +20,9 @@ static unsigned int nfm_num_buffer_packets = 0; /* Maximum buffered packets */
 static unsigned int nfm_num_buffer_bytes = 3000;  /* Maximum buffered bytes */
 static int nfm_is_buffer_packets = 0; /* By default, buffer */
 static int nfm_is_buffer_bytes = 1; 
+// Timeout value
+static int timeout = 0; /* For command line input */
+static int nfm_timeout = 0; /* For code */
 
 // Debugging
 static unsigned int nfm_pc = 0;
@@ -115,6 +118,8 @@ static struct nf_mobility_flow * nf_mobility_create_flow(__u8 protocol, __be32 s
 static struct nf_mobility_buffer * nf_mobility_enqueue_packet(struct nf_mobility_flow *flow, __u32 start_seq, __u32 end_seq, struct sk_buff * skb)
 {
 	struct nf_mobility_buffer *new_buffer, *buffer;
+	unsigned long int cur_jiffies;
+	cur_jiffies = jiffies;
 
 	new_buffer = (struct nf_mobility_buffer *) kmalloc(sizeof(struct nf_mobility_buffer), GFP_ATOMIC);
 	if(new_buffer == NULL){
@@ -126,11 +131,12 @@ static struct nf_mobility_buffer * nf_mobility_enqueue_packet(struct nf_mobility
 	flow->buffered_bytes += end_seq - start_seq + 1;
 
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Buffered packets = %d, bytes = %d, newest = (%d, %d)\n", flow->buffered_packets, flow->buffered_bytes, start_seq, end_seq);
+printk(KERN_ALERT "Buffered packets = %d, bytes = %u, newest = (%u, %u), timestamp = %lu\n", flow->buffered_packets, flow->buffered_bytes, start_seq, end_seq, cur_jiffies);
 
 	new_buffer->skb = skb;
 	new_buffer->start_seq = start_seq;
 	new_buffer->end_seq = end_seq;
+	new_buffer->timestamp = cur_jiffies;
 
 	/* Insert new buffer into ordered linked list (by start_seq) */
 	if(flow->buffer_head == NULL){ /* && flow->buffer_tail == NULL */
@@ -163,6 +169,12 @@ printk(KERN_ALERT "Buffered packets = %d, bytes = %d, newest = (%d, %d)\n", flow
 			flow->buffer_head->prev = new_buffer;
 			flow->buffer_head = new_buffer;
 		}
+	}	
+
+	
+	// Start delivery timer if necessary
+	if(!timer_pending(&(nfm_delivery_timer))){
+		nf_mobility_start_delivery_timer(cur_jiffies);
 	}
 
 	return new_buffer;
@@ -264,7 +276,7 @@ static int nf_mobility_match_and_fill_holes(struct nf_mobility_flow *flow, __u32
 	holes_head = flow->holes_head;
 
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Start hole match for packet (%d, %d).\n", start_seq, end_seq);
+printk(KERN_ALERT "Start hole match for packet (%u, %u).\n", start_seq, end_seq);
 	/* No hole to match against */
 	if(holes_head == NULL){
 if(NFM_DEBUG_HOLE)
@@ -293,13 +305,16 @@ printk(KERN_ALERT "Packet out of range, returning.\n");
 	}
 
 	/* No match if packet is between two holes */
-	if(hole->start_seq > end_seq)
+	if(hole->start_seq > end_seq){
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Packet between 2 holes, no match, returning.\n");
 		return NF_MOBILITY_MATCH_NO_HOLE;
+	}
 
 	/* Check if the hole contains packet but not with completely same range */
 	if(hole->start_seq < start_seq && hole->end_seq > end_seq){
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Spliting hole, (%d, %d) -> (%d, %d) + (%d, %d) ,then returning.\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq - 1, end_seq + 1, hole->end_seq);
+printk(KERN_ALERT "Spliting hole, (%u, %u) -> (%u, %u) + (%u, %u) ,then returning.\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq - 1, end_seq + 1, hole->end_seq);
 		/* Split hole into two by
 		 * 1. Shrinking left portion
 		 * 2. Create new hole for right portion */
@@ -324,14 +339,14 @@ printk(KERN_ALERT "Checking for packet-from-right overlap.\n");
 	 * ending of hole) */
 	if(hole->start_seq < start_seq){
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Shrink hole (%d, %d) -> (%d, %d)\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq-1);
+printk(KERN_ALERT "Shrink hole (%u, %u) -> (%u, %u)\n", hole->start_seq, hole->end_seq, hole->start_seq, start_seq-1);
 		/* Shrink hole */
 		hole->end_seq = start_seq - 1;
 		hole = hole->next; /* This hole already processed */	
 	}
 
 if(NFM_DEBUG_HOLE){
-if(hole != NULL) printk(KERN_ALERT "Before checking complete overlap, cur hole = (%d, %d).\n", hole->start_seq, hole->end_seq);
+if(hole != NULL) printk(KERN_ALERT "Before checking complete overlap, cur hole = (%u, %u).\n", hole->start_seq, hole->end_seq);
 else printk(KERN_ALERT "Before checking complete overlap, no more holes.\n"); 
 }
 	/* Process holes whose ranges are contained within packet's range
@@ -346,23 +361,27 @@ else printk(KERN_ALERT "Before checking complete overlap, no more holes.\n");
 		if(hole->end_seq > end_seq){ /* No more complete overlap or containment */
 			break;
 		}
+if(NFM_DEBUG_HOLE){
+printk(KERN_ALERT "Removing completely hole (%u, %u)\n", hole->start_seq, hole->end_seq);
+}
 		/* Remove completely overlapped hole (links updated automatically) */
 		nf_mobility_remove_hole(flow, hole);
 	}
 
 if(NFM_DEBUG_HOLE){
-if(hole != NULL) printk(KERN_ALERT "After checking complete overlap, cur hole = (%d, %d).\n", hole->start_seq, hole->end_seq);
+if(hole != NULL) printk(KERN_ALERT "After checking complete overlap, cur hole = (%u, %u).\n", hole->start_seq, hole->end_seq);
 else  printk(KERN_ALERT "After checking complete overlap, no more holes.\n");
 }
 	/* Possible partial overlap from the left (ending of packet overlaps 
 	 * beginning of hole) */
 	if(hole != NULL && hole->start_seq <= end_seq){
 if(NFM_DEBUG_HOLE)
-printk(KERN_ALERT "Shrinking hole from left (%d, %d) -> (%d, %d)", hole->start_seq, hole->end_seq, end_seq + 1, hole->end_seq);
+printk(KERN_ALERT "Shrinking hole from left (%u, %u) -> (%u, %u)\n", hole->start_seq, hole->end_seq, end_seq + 1, hole->end_seq);
 		/* Shrink hole */
 		hole->start_seq = end_seq + 1;
 	}
-
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Returning matched = %d\n", matched_first);
 	return (matched_first ? NF_MOBILITY_MATCH_FIRST_HOLE : NF_MOBILITY_MATCH_OTHER_HOLE);
 }
 
@@ -372,23 +391,6 @@ static void nf_mobility_deliver_packet(struct sk_buff* skb, int (*ref_fn)(struct
 {
 	ref_fn(skb); // call the reference function passed to this hook (ip_local_deliver_finish() in this version)	
 }
-
-static int nf_mobility_should_deliver_buffer(struct nf_mobility_flow *flow)
-{
-	// Conditions that merit delivering a buffered packet:
-	//
-	// Either one of the two:
-	// 1. The flow is not buffering packets (either due to no holes or an explicit policy)
-	// 2. Buffering packets, and either or both of :
-	//     a) We're counting buffers by packets and number of buffered packets exceeded threshold
-	//     b) We're counting buffers by bytes and number of buffered bytes exceeded threshold
-	//
-	return !(flow->is_buffering) || 
-		((!nfm_is_buffer_packets || (flow->buffered_packets >= nfm_num_buffer_packets)) && 
-		 (!nfm_is_buffer_bytes || (flow->buffered_bytes >= nfm_num_buffer_bytes))
-		);
-}
-
 
 static void nf_mobility_deliver_buffer_upto(struct nf_mobility_flow *flow, struct nf_mobility_buffer *stop_buffer, int (*ref_fn)(struct sk_buff *)){
 	struct nf_mobility_buffer *buffer, *next_buffer;
@@ -409,6 +411,9 @@ static void nf_mobility_deliver_buffer_upto(struct nf_mobility_flow *flow, struc
 	if(flow->buffer_head == NULL){
 		flow->buffer_tail = NULL;
 	}
+	else{
+		flow->buffer_head->prev = NULL;
+	}
 	
 	return;
 }
@@ -421,47 +426,65 @@ static unsigned int nf_mobility_try_deliver(struct nf_mobility_flow *flow, __u32
 		 * Need to do something more than just simply returning NF_ACCEPT
 		 * e.g. may have to deliver buffered packets too */
 		if(nf_mobility_enqueue_packet(flow, start_seq, end_seq, skb) == NULL){
-			printk(KERN_ALERT "WaRNING: Cannot enqueue packet, accepting it.\n");
+			printk(KERN_ALERT "WARNING: Cannot enqueue packet, accepting it.\n");
 			return NF_ACCEPT;
 		}
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "try_deliver(): Queued packet (%u, %u)\n", start_seq, end_seq);
 	}
 	else{
-if(NFM_DEBUG && (nfm_pc % 10 == 0))
-printk(KERN_ALERT "Delivering received packet in nf_mobility_try_deliver()\n");
+//if(NFM_DEBUG && (nfm_pc % 10 == 0))
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "try_deliver(): Delivering packet (%u, %u)\n", start_seq, end_seq);
 		nf_mobility_deliver_packet(skb, ref_fn);
 	}
-
-	/* Check if need to deliver out-of-order packets */
-	if(nf_mobility_should_deliver_buffer(flow)){
-//printk(KERN_ALERT "Delivering all buffered packets in nf_mobility_try_deliver()\n");
-		nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
-		
-		// Turn off buffering and
-		// ignore existing holes - can't do reordering perfectly
-		// TCP will handle the (rare) incoming out-of-order packets even after buffering
-		flow->is_buffering = 0;
-		flow->buffered_packets = 0;
-		flow->buffered_bytes = 0;
-		// Remove holes
-		nf_mobility_remove_holes(flow);
-		// Update start seq for checking dupes
-		flow->dupe_check_start_seq = flow->head_of_line;
-	}
-	// NF_STOLEN is used to make sure the Netfilter framework doesn't 
-	// process the packet
 	return NF_STOLEN;
 }
+
+/**
+ * Start delivery timer (parameters set in nf_mobility_init())
+ * Expiry time ( jiffie ) = start jiffie + timeout parameter (HZ)
+ */
+void nf_mobility_start_delivery_timer(unsigned long int start_jiffies){
+	init_timer(&(nfm_delivery_timer));
+	(nfm_delivery_timer).expires = start_jiffies + nfm_timeout;
+	(nfm_delivery_timer).data	 = 0;
+	(nfm_delivery_timer).function = nf_mobility_timer_delivery;
+	add_timer(&(nfm_delivery_timer));
+};
 
 /**
  * Delivery by timeout
  */
 void nf_mobility_timer_delivery(unsigned long x){
-	printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
-	init_timer(&(nfm_delivery_timer));
-	(nfm_delivery_timer).expires = jiffies + HZ;
-	(nfm_delivery_timer).data	 = 0;
-	(nfm_delivery_timer).function = nf_mobility_timer_delivery;
-	add_timer(&(nfm_delivery_timer));
+	unsigned long int cur_jiffies;
+	struct nf_mobility_flow *flow;
+	struct nf_mobility_buffer *buffer;
+	int should_stop_timer;
+	
+	write_lock_bh(&(nfm->flow_lock));
+	cur_jiffies = jiffies;
+	should_stop_timer = 1;
+	for(flow = nfm_flows; flow != NULL; flow = flow->next){
+		for(buffer = flow->buffer_tail; buffer != NULL; buffer = buffer->prev){
+			if(time_after_eq(cur_jiffies, buffer->timestamp))
+				break;
+		}
+		if(buffer != NULL)
+			nf_mobility_deliver_buffer_upto(flow, buffer->next, nfm->ref_fn);
+		if(flow->buffer_head != NULL){
+			should_stop_timer = 0;
+		}
+		else{
+			flow->is_buffering = 0;
+		}
+	}
+	
+	//printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
+	if(!should_stop_timer){
+		nf_mobility_start_delivery_timer(cur_jiffies);
+	}
+	write_unlock_bh(&(nfm->flow_lock));
 }
 
 
@@ -477,6 +500,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	__be16 sport, dport;
 	__u32 start_seq, end_seq, ack_seq, packet_length;
 	__u8 protocol;
+	__sum16 checksum;
 
 	// Processing variables
 	struct nf_mobility_flow *flow;
@@ -486,7 +510,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 
 	// For now, we support only TCP connections - not sure how to work with UDP-based flows - we can still do 
 	// duplicate removal, but reordering will be difficult due to possible random IP numbers
-        iph = ip_hdr(skb);
+    iph = ip_hdr(skb);
 	protocol = iph->protocol;
 	if(protocol != IPPROTO_TCP){
 		return NF_ACCEPT;
@@ -501,11 +525,11 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	start_seq = ntohl(tcph->seq);
 	end_seq = start_seq + tcph->syn + tcph->fin + skb->len - sizeof(struct iphdr) - tcph->doff * 4 - 1;
 	ack_seq = ntohl(tcph->ack_seq);
+	checksum = ntohs(tcph->check);
 	packet_length = end_seq - start_seq + 1;
 	//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
-//nfm_pc++;
-//if(nfm_pc % 10 == 0)
-//	printk(KERN_ALERT "TCP packet (%u), start_seq = %u, end_seq = %u, len = %u, ack_seq = %u\n", iph->protocol, start_seq, end_seq, packet_length, ack_seq);
+if(NFM_DEBUG_HOLE)
+printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq, end_seq, ack_seq, checksum);
 
 	if(packet_length <= 0) /* Packet without data, e.g. FIN packet */
 		return NF_ACCEPT;
@@ -513,6 +537,8 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	/* ---- Process packet ---- */
 	ret = NF_ACCEPT;
 	write_lock_bh(&(nfm->flow_lock));
+	
+	(nfm->ref_fn) = ref_fn;
 
 	/* Get flow entry, create one if necessary */
 	flow = nf_mobility_get_flow(protocol, saddr, daddr, sport, dport);
@@ -534,15 +560,10 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		// Try to deliver buffered packets (holes might have held up packets)
 		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 	}
-	/* Old packet - let TCP handle it */
-	else if(end_seq < flow->dupe_check_start_seq){
-printk(KERN_ALERT "Old packet, let TCP handle\n");
-		ret = NF_ACCEPT;
-	}
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
 	else if(start_seq < flow->head_of_line){ 
-printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
+//printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 		switch(nf_mobility_match_and_fill_holes(flow, start_seq, end_seq)){
 			case NF_MOBILITY_MATCH_FIRST_HOLE:
 				/* Deliver this packet */
@@ -551,11 +572,11 @@ printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 
 				/* Check for in-order packets for delivery */
 				if(flow->buffer_head == NULL){
-					printk(KERN_ALERT "Filled first hole, but out-of-order packets already delivered.\n");
+//printk(KERN_ALERT "Filled first hole, but out-of-order packets already delivered.\n");
 					break;
 				}
 				else if(flow->holes_head == NULL){
-					printk(KERN_ALERT "Filled first (and only) hole, delivering out-of-order packets\n");
+//printk(KERN_ALERT "Filled first (and only) hole, delivering out-of-order packets\n");
 					nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 					break;
 				}
@@ -577,6 +598,12 @@ printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 				break;
 
 			case NF_MOBILITY_MATCH_NO_HOLE:
+				if(end_seq >= flow->head_of_line){
+printk(KERN_ALERT "Rare case...\n");
+					nf_mobility_deliver_packet(skb, ref_fn);
+					ret = NF_STOLEN;
+					break;
+				}
 				/* Is duplicate packet, drop it */
 //printk(KERN_ALERT "Dropping duplicate\n");
 if(NFM_DEBUG_DUPE){
@@ -590,19 +617,9 @@ printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
 			default:
 				printk(KERN_ALERT "ERROR in nf_mobility module: Unexpected hole-matching result!\n");
 		}
-		
+		if(end_seq >= flow->head_of_line)
+			flow->head_of_line = end_seq+1;	
 	}
-/*
-else{
-if(NFM_DEBUG_HOLE) printk(KERN_ALERT "Delivering hole packet\n");
-nf_mobility_deliver_packet(skb, ref_fn);
-if(NFM_DEBUG_HOLE) printk(KERN_ALERT "After delivery\n");
-}
-write_unlock_bh(&(nfm->flow_lock));
-	return NF_STOLEN;
-
-	if(false){}
-*/	
 	else{	/* Packet creates a hole after head of line (i.e. start_seq > flow->head_of_line) */
 		// Hole spans sequence numbers from head of line up to the byte before the packet's
 		// starting sequence number
@@ -694,17 +711,20 @@ static int __init nf_mobility_init(void)
 		nfm_is_buffer_bytes = 1;
 		nfm_num_buffer_bytes = NF_MOBILITY_DEFAULT_NUM_BUFFER_BYTES;
 	}
+
+	// Set timeout value
+	if(timeout <= 0)
+		nfm_timeout = NF_MOBILITY_DEFAULT_TIMEOUT;
+	else if(timeout * HZ < 1000)
+		nfm_timeout = HZ;
+	else nfm_timeout = timeout * HZ / 1000;
 	
 	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
 	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
+	printk(KERN_ALERT "   Timeout: input = %d, HZ = %d, duration (HZ) = %d\n", timeout, HZ, nfm_timeout);
 	
 	// Timer test code
-	printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
-	init_timer(&(nfm_delivery_timer));
-	(nfm_delivery_timer).expires = jiffies + HZ;
-	(nfm_delivery_timer).data	 = 0;
-	(nfm_delivery_timer).function = nf_mobility_timer_delivery;
-	add_timer(&(nfm_delivery_timer));
+	nf_mobility_start_delivery_timer(jiffies);
 
 	return nf_register_hook(&nf_mobility_ops);
 }
@@ -720,6 +740,7 @@ static void __exit nf_mobility_exit(void)
 /* Read module parameters from command line arguments */
 module_param(nfm_num_buffer_packets, int, 0);
 module_param(nfm_num_buffer_bytes, int, 0);
+module_param(timeout, int, 0);
 
 module_init(nf_mobility_init);
 module_exit(nf_mobility_exit);
