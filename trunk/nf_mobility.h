@@ -4,6 +4,7 @@
 #define _NF_MOBILITY_H_
 
 #include <linux/types.h>
+#include <linux/time.h> /* For delivery timer in bicast */
 
 /* Default parameters */
 #define NF_MOBILITY_MODE_BICAST 0x01
@@ -22,11 +23,17 @@
 #define NFM_DEBUG_DUPE 1
 #define NFM_DEBUG_HOLE 1
 
+// Forward declarations
 struct nf_mobility_buffer;
 struct nf_mobility_hole;
 
+// Delivery timer
+struct timer_list nfm_delivery_timer; 
+
+// Info struct
 struct nf_mobility{
 	int mode;
+	int status; // On, off, etc.
 	rwlock_t flow_lock;	
 };
 
@@ -69,6 +76,7 @@ struct nf_mobility_hole{
 };
 
 static void nf_mobility_remove_holes(struct nf_mobility_flow *flow);
+static void nf_mobility_timer_delivery(unsigned long x);
 
 #endif
 
