@@ -445,6 +445,8 @@ printk(KERN_ALERT "try_deliver(): Delivering packet (%u, %u)\n", start_seq, end_
 /**
  * Start delivery timer (parameters set in nf_mobility_init())
  * Expiry time ( jiffie ) = start jiffie + timeout parameter (HZ)
+ *
+ * Caller MUST hold nfm->flow_lock
  */
 void nf_mobility_start_delivery_timer(unsigned long int start_jiffies){
 	init_timer(&(nfm_delivery_timer));
@@ -463,33 +465,27 @@ void nf_mobility_timer_delivery(unsigned long x){
 	struct nf_mobility_buffer *buffer;
 	int should_stop_timer;
 	
-	write_lock_bh(&(nfm->flow_lock));
-	cur_jiffies = jiffies;
-	should_stop_timer = 1;
-	for(flow = nfm_flows; flow != NULL; flow = flow->next){
-		for(buffer = flow->buffer_tail; buffer != NULL; buffer = buffer->prev){
-			if(time_after_eq(cur_jiffies, buffer->timestamp))
-				break;
+	write_lock_bh(&(nfm->flow_lock));	
+	if(nfm->status != NF_MOBILITY_STATUS_NO_PROCESSING){	
+		cur_jiffies = jiffies;
+		should_stop_timer = 1;
+		// Deliver all packets that have expired
+		for(flow = nfm_flows; flow != NULL; flow = flow->next){
+			for(buffer = flow->buffer_tail; buffer != NULL; buffer = buffer->prev){
+				if(time_after_eq(cur_jiffies, buffer->timestamp))
+					break;
+			}
+			if(buffer != NULL)
+				nf_mobility_deliver_buffer_upto(flow, buffer->next, nfm->ref_fn);
+		
+			// Forget about holes
+			nf_mobility_remove_holes(flow);
+			flow->dupe_check_start_seq = flow->head_of_line;
 		}
-		if(buffer != NULL)
-			nf_mobility_deliver_buffer_upto(flow, buffer->next, nfm->ref_fn);
-		/*
-		if(flow->buffer_head != NULL){
-			should_stop_timer = 0;
-		}
-		else{
-			flow->is_buffering = 0;
-		}
-		*/
-		// Forget about holes
-		nf_mobility_remove_holes(flow);
-		flow->dupe_check_start_seq = flow->head_of_line;
-	}
-	
-	//printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
-	//if(!should_stop_timer){
+
+		// Restart timer	
 		nf_mobility_start_delivery_timer(cur_jiffies);
-	//}
+	}
 	write_unlock_bh(&(nfm->flow_lock));
 }
 
@@ -501,8 +497,24 @@ int nf_mobility_ioctl(struct inode *inode, struct file *file, unsigned int ioctl
 			printk(KERN_ALERT "Received ioctl command, param = %lu\n", ioctl_param);
 			switch(ioctl_param){
 				case NF_MOBILITY_IOCTL_START_BICAST:
+					write_lock_bh(&(nfm->flow_lock));
+					if(nfm->status == NF_MOBILITY_STATUS_NO_PROCESSING){
+						nfm->status = NF_MOBILITY_STATUS_BICAST;
+						// Start timer
+						nf_mobility_start_delivery_timer(jiffies);
+					}
+					else printk(KERN_ALERT "Error: Module already procesing packets.\n");
+					write_unlock_bh(&(nfm->flow_lock));
 					break;
 				case NF_MOBILITY_IOCTL_STOP_BICAST:
+					printk(KERN_ALERT "Stopping bicast...\n");
+					write_lock_bh(&(nfm->flow_lock));
+					if(nfm->status == NF_MOBILITY_STATUS_BICAST){
+						nfm->status = NF_MOBILITY_STATUS_NO_PROCESSING;
+						nf_mobility_cleanup();
+					}
+					else printk(KERN_ALERT "Error: Module status not bicast!\n");
+					write_unlock_bh(&(nfm->flow_lock));
 					break;
 			}
 			break;
@@ -533,12 +545,20 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	struct nf_mobility_buffer *buffer;
 	struct nf_mobility_hole *hole;
 
+	write_lock_bh(&(nfm->flow_lock));
+	// If status is "off", just bypass every packet
+	if(nfm->status == NF_MOBILITY_STATUS_NO_PROCESSING){
+		ret = NF_ACCEPT;
+		goto nfm_unlock;
+	}
+
 	// For now, we support only TCP connections - not sure how to work with UDP-based flows - we can still do 
 	// duplicate removal, but reordering will be difficult due to possible random IP numbers
     iph = ip_hdr(skb);
 	protocol = iph->protocol;
 	if(protocol != IPPROTO_TCP){
-		return NF_ACCEPT;
+		ret = NF_ACCEPT;
+		goto nfm_unlock;
 	}
 
 	/* ---- Get packet info ---- */
@@ -555,14 +575,14 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
 if(NFM_DEBUG_HOLE)
 printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq, end_seq, ack_seq, checksum);
-
-	if(packet_length <= 0) /* Packet without data, e.g. FIN packet */
-		return NF_ACCEPT;
+	/* Packet without data, e.g. SYN, FIN packet */
+	if(packet_length <= 0){
+		ret = NF_ACCEPT;
+		goto nfm_unlock;
+	}
 
 	/* ---- Process packet ---- */
-	ret = NF_ACCEPT;
-	write_lock_bh(&(nfm->flow_lock));
-	
+	ret = NF_ACCEPT; // In case someone forgets to set this in future modifications	
 	(nfm->ref_fn) = ref_fn;
 
 	/* Get flow entry, create one if necessary */
@@ -577,7 +597,6 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 		nf_mobility_print_incoming_TCP(flow->saddr, flow->daddr, flow->sport, flow->dport);
 		printk(KERN_ALERT "HOL = %u\n", flow->head_of_line);
 	}
-
 
 	/* Packet falls on head of line */
 	if(start_seq == flow->head_of_line){
@@ -644,6 +663,7 @@ printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
 				break;
 			default:
 				printk(KERN_ALERT "ERROR in nf_mobility module: Unexpected hole-matching result!\n");
+				ret = NF_ACCEPT;
 		}
 		if(end_seq >= flow->head_of_line)
 			flow->head_of_line = end_seq+1;	
@@ -655,6 +675,7 @@ printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
 			flow->is_buffering = 1; /* Turn on buffering due to hole */
 			ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 		}
+		else ret = NF_ACCEPT;
 		flow->head_of_line = end_seq + 1; /* Update head of line */
 	}
 nfm_unlock:
@@ -679,14 +700,14 @@ void nf_mobility_remove_holes(struct nf_mobility_flow *flow){
 
 /**
  * Cleans up all memory used by the module
+ * WARNING: Caller MUST hold nfm->flow_lock
  */
-static void nf_mobility_cleanup(void)
+void nf_mobility_cleanup(void)
 {
 	struct nf_mobility_flow *flow, *next_flow;
 	struct nf_mobility_buffer *buffer, *next_buffer;
 
 	printk(KERN_ALERT "Freeing memory...\n");
-	write_lock_bh(&(nfm->flow_lock));	
 	/* For each flow */
 	for(flow = nfm_flows; flow != NULL; flow = next_flow){
 		next_flow = flow->next;
@@ -698,13 +719,10 @@ static void nf_mobility_cleanup(void)
 		nf_mobility_remove_holes(flow);
 		kfree(flow);
 	}
-	write_unlock_bh(&(nfm->flow_lock));
 
 	// Cancel timer
 	if(timer_pending(&(nfm_delivery_timer)))
 		del_timer(&(nfm_delivery_timer));
-
-	kfree(nfm);
 
 	printk(KERN_ALERT "Done!\n");
 }
@@ -745,6 +763,8 @@ static int __init nf_mobility_init(void)
 	printk(KERN_ALERT "Initializing nf_mobility and nf_mobility_flow structures\n");
 	nfm = (struct nf_mobility *) kmalloc(sizeof(struct nf_mobility), GFP_ATOMIC);
 	nfm->mode = NF_MOBILITY_MODE_BICAST;
+	// Need to activate packet processing via ioctl call
+	nfm->status = NF_MOBILITY_STATUS_NO_PROCESSING;
 	rwlock_init(&(nfm->flow_lock));
 	nfm_flows = NULL;
 
@@ -768,10 +788,7 @@ static int __init nf_mobility_init(void)
 	
 	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
 	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
-	printk(KERN_ALERT "   Timeout: input = %d, HZ = %d, duration (HZ) = %d\n", timeout, HZ, nfm_timeout);
-	
-	//	Start timer
-	nf_mobility_start_delivery_timer(jiffies);
+	printk(KERN_ALERT "   Timeout: input = %d, HZ = %d, duration (HZ) = %d\n", timeout, HZ, nfm_timeout);	
 
 	return nf_register_hook(&nf_mobility_ops);
 }
@@ -780,8 +797,20 @@ static void __exit nf_mobility_exit(void)
 {
 	printk(KERN_ALERT "Removing nf-mobility module\n");
 	// Free memory
+	write_lock_bh(&(nfm->flow_lock));
 	nf_mobility_cleanup();
+	write_unlock_bh(&(nfm->flow_lock));
+	// Potential race condition here...
+	kfree(nfm);
+	
+	printk(KERN_ALERT "Unregistering Netfilter hook\n");
 	nf_unregister_hook(&nf_mobility_ops);
+	
+	// IOCTL cleanup
+	printk(KERN_ALERT "Unregistering IOCTL\n");
+	unregister_chrdev(NF_MOBILITY_MAJOR_NUM, NF_MOBILITY_DEVICE_FILE_NAME);
+	
+	printk(KERN_ALERT "Module exiting completed.\n");
 }
 
 /* Read module parameters from command line arguments */

@@ -18,6 +18,10 @@
 // By default, timeout every 4 jiffies
 #define NF_MOBILITY_DEFAULT_TIMEOUT 4
 
+/* Module status */
+#define NF_MOBILITY_STATUS_NO_PROCESSING 200
+#define NF_MOBILITY_STATUS_BICAST		 300
+
 /* Hole-matching results */
 #define NF_MOBILITY_MATCH_FIRST_HOLE 0x10
 #define NF_MOBILITY_MATCH_OTHER_HOLE 0x20
@@ -38,8 +42,9 @@ struct timer_list nfm_delivery_timer;
 // Info struct
 struct nf_mobility{
 	int mode;
-	int status; // On, off, etc.
+	// lock needed to change flows (nfm_flows in .c file) and status (below)
 	rwlock_t flow_lock;	
+	int status; // On, off, etc.
 	int (*ref_fn)(struct sk_buff *); // For timer delivery function
 };
 
@@ -89,6 +94,7 @@ struct nf_mobility_hole{
 static void nf_mobility_remove_holes(struct nf_mobility_flow *flow);
 static void nf_mobility_start_delivery_timer(unsigned long int start_jiffies);
 static void nf_mobility_timer_delivery(unsigned long x);
+static void nf_mobility_cleanup(void);
 
 #endif
 
