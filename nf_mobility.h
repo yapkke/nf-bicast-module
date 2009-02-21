@@ -6,6 +6,8 @@
 #include <linux/types.h>
 #include <linux/time.h> /* For delivery timer in bicast */
 
+#include "nf_mobility_ioctl.h" // For IOCTL stuff
+
 /* Default parameters */
 #define NF_MOBILITY_MODE_BICAST 0x01
 #define NF_MOBILITY_MODE_HOOLOCK 0x02 /* Future development */
@@ -24,7 +26,7 @@
 /* DEBUGGING */
 #define NFM_DEBUG 0
 #define NFM_DEBUG_DUPE 1
-#define NFM_DEBUG_HOLE 1
+#define NFM_DEBUG_HOLE 0
 
 // Forward declarations
 struct nf_mobility_buffer;

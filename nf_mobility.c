@@ -23,6 +23,7 @@ static int nfm_is_buffer_bytes = 1;
 // Timeout value
 static int timeout = 0; /* For command line input */
 static int nfm_timeout = 0; /* For code */
+static int nfm_forget_hole_periods = 2;
 
 // Debugging
 static unsigned int nfm_pc = 0;
@@ -171,12 +172,12 @@ printk(KERN_ALERT "Buffered packets = %d, bytes = %u, newest = (%u, %u), timesta
 		}
 	}	
 
-	
+/*	
 	// Start delivery timer if necessary
 	if(!timer_pending(&(nfm_delivery_timer))){
 		nf_mobility_start_delivery_timer(cur_jiffies);
 	}
-
+*/
 	return new_buffer;
 }
 
@@ -472,19 +473,43 @@ void nf_mobility_timer_delivery(unsigned long x){
 		}
 		if(buffer != NULL)
 			nf_mobility_deliver_buffer_upto(flow, buffer->next, nfm->ref_fn);
+		/*
 		if(flow->buffer_head != NULL){
 			should_stop_timer = 0;
 		}
 		else{
 			flow->is_buffering = 0;
 		}
+		*/
+		// Forget about holes
+		nf_mobility_remove_holes(flow);
+		flow->dupe_check_start_seq = flow->head_of_line;
 	}
 	
 	//printk("jiffies = %lu,  HZ = %d\n", jiffies, HZ);
-	if(!should_stop_timer){
+	//if(!should_stop_timer){
 		nf_mobility_start_delivery_timer(cur_jiffies);
-	}
+	//}
 	write_unlock_bh(&(nfm->flow_lock));
+}
+
+/* ------------ IOCTL ------------ */
+int nf_mobility_ioctl(struct inode *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
+{
+	switch(ioctl_num){
+		case NF_MOBILITY_IOCTL_COMMAND:
+			printk(KERN_ALERT "Received ioctl command, param = %lu\n", ioctl_param);
+			switch(ioctl_param){
+				case NF_MOBILITY_IOCTL_START_BICAST:
+					break;
+				case NF_MOBILITY_IOCTL_STOP_BICAST:
+					break;
+			}
+			break;
+		default:
+			printk(KERN_ALERT "WARNING: Received unknown ioctl number (%d), param = %lu\n", ioctl_num, ioctl_param);
+	}
+	return 0;
 }
 
 
@@ -560,6 +585,9 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 		// Try to deliver buffered packets (holes might have held up packets)
 		ret = nf_mobility_try_deliver(flow, start_seq, end_seq, skb, ref_fn);
 	}
+	else if(start_seq < flow->dupe_check_start_seq){
+		ret = NF_ACCEPT;
+	}
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
 	else if(start_seq < flow->head_of_line){ 
@@ -608,7 +636,7 @@ printk(KERN_ALERT "Rare case...\n");
 //printk(KERN_ALERT "Dropping duplicate\n");
 if(NFM_DEBUG_DUPE){
 nfm_dupe_count++;
-if(nfm_dupe_count % 50 == 0)
+if(nfm_dupe_count % 20 == 0)
 printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
 }
 
@@ -681,7 +709,7 @@ static void nf_mobility_cleanup(void)
 	printk(KERN_ALERT "Done!\n");
 }
 
-
+// Structure for Netfilter hook
 static struct nf_hook_ops nf_mobility_ops __read_mostly =
 {
 	.pf = PF_INET,
@@ -690,9 +718,28 @@ static struct nf_hook_ops nf_mobility_ops __read_mostly =
 	.hook = nf_mobility_hook
 };
 
+// Structure for IOCTL registration
+struct file_operations nf_mobility_fops = 
+{
+	.ioctl = nf_mobility_ioctl
+};
+
 static int __init nf_mobility_init(void)
 {
+	int ret_val;
 	printk(KERN_ALERT "Initializing nf-mobility module\n");
+	
+	// IOCTL initialization
+	ret_val = register_chrdev(NF_MOBILITY_MAJOR_NUM, NF_MOBILITY_DEVICE_FILE_NAME, &nf_mobility_fops);
+
+	// Negative return value -> error
+	if(ret_val < 0){
+		printk(KERN_ALERT "Failed to register ioctl stuff, errno: %d\n", ret_val);
+		return ret_val;
+	}
+	printk(KERN_ALERT "Registered device for ioctl, major device number = %d\n", NF_MOBILITY_MAJOR_NUM);
+
+	// Misc. module initialization
 	printk(KERN_ALERT "Size of struct iphdr = %d\n", sizeof(struct iphdr));
 	
 	printk(KERN_ALERT "Initializing nf_mobility and nf_mobility_flow structures\n");
@@ -723,7 +770,7 @@ static int __init nf_mobility_init(void)
 	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
 	printk(KERN_ALERT "   Timeout: input = %d, HZ = %d, duration (HZ) = %d\n", timeout, HZ, nfm_timeout);
 	
-	// Timer test code
+	//	Start timer
 	nf_mobility_start_delivery_timer(jiffies);
 
 	return nf_register_hook(&nf_mobility_ops);
