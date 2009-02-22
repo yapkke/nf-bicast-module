@@ -16,7 +16,7 @@
 #define NF_MOBILITY_DESC   "Netfilter module for bicast"
 
 #ifdef LINUX_VERSION_CODE
-	#ifdef KERNE_VERSION
+	#ifdef KERNEL_VERSION
 		#if KERNEL_VERSION < KERNEL_VERSION(2,6,25)
 			#define NF_INET_LOCAL_IN NF_IP_LOCAL_IN
 			#define NFM_OLD_NF
