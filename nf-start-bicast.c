@@ -19,7 +19,7 @@
 int do_ioctl(int fd, int param){
 	int ret_val;
 
-	ret_val = ioctl(fd, NF_MOBILITY_IOCTL_COMMAND, param);
+	ret_val = ioctl(fd, NF_MOBILITY_IOCTL_SET_STATUS, param);
 
 	if(ret_val < 0){
 		fprintf(stderr, "ioctl call failed. ret_val = %d\n", ret_val);	
