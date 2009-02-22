@@ -8,10 +8,25 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 
+#include <linux/version.h>
+
 #include "nf_mobility.h"
 
 #define NF_MOBILITY_AUTHOR "Michael Chan <mcfchan@stanford.edu>"
 #define NF_MOBILITY_DESC   "Netfilter module for bicast"
+
+#ifdef LINUX_VERSION_CODE
+	#ifdef KERNE_VERSION
+		#if KERNEL_VERSION < KERNEL_VERSION(2,6,25)
+			#define NF_INET_LOCAL_IN NF_IP_LOCAL_IN
+			#define NFM_OLD_NF
+		#endif
+	#endif
+#endif
+
+#ifndef NFM_OLD_NF
+#define NFM_NEW_NF
+#endif
 
 /**
  * Module parameters
@@ -21,8 +36,8 @@ static unsigned int nfm_num_buffer_bytes = 3000;  /* Maximum buffered bytes */
 static int nfm_is_buffer_packets = 0; /* By default, buffer */
 static int nfm_is_buffer_bytes = 1; 
 // Timeout value
-static int timeout = 0; /* For command line input */
-static int nfm_timeout = 0; /* For code */
+static int timeout = 0; /* in ms, for command line input */
+static int nfm_timeout = 0; /* in jiffies, for code */
 static int nfm_forget_hole_periods = 2;
 
 // Debugging
@@ -442,6 +457,18 @@ printk(KERN_ALERT "try_deliver(): Delivering packet (%u, %u)\n", start_seq, end_
 	return NF_STOLEN;
 }
 
+// --------------- TIMER STUFF ----------------
+/**
+ * Converts milliseconds to jiffies
+ */
+int nf_mobility_ms_to_jiffies(int timeout){
+	if(timeout <= 0)
+		return NF_MOBILITY_DEFAULT_TIMEOUT;
+	else if(timeout * HZ < 1000)
+		return HZ;
+	return timeout * HZ / 1000;
+}
+
 /**
  * Start delivery timer (parameters set in nf_mobility_init())
  * Expiry time ( jiffie ) = start jiffie + timeout parameter (HZ)
@@ -483,8 +510,9 @@ void nf_mobility_timer_delivery(unsigned long x){
 			flow->dupe_check_start_seq = flow->head_of_line;
 		}
 
-		// Restart timer	
-		nf_mobility_start_delivery_timer(cur_jiffies);
+		// Restart timer
+		if(!timer_pending(&nfm_delivery_timer))
+			nf_mobility_start_delivery_timer(cur_jiffies);
 	}
 	write_unlock_bh(&(nfm->flow_lock));
 }
@@ -493,7 +521,7 @@ void nf_mobility_timer_delivery(unsigned long x){
 int nf_mobility_ioctl(struct inode *inode, struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	switch(ioctl_num){
-		case NF_MOBILITY_IOCTL_COMMAND:
+		case NF_MOBILITY_IOCTL_SET_STATUS:
 			printk(KERN_ALERT "Received ioctl command, param = %lu\n", ioctl_param);
 			switch(ioctl_param){
 				case NF_MOBILITY_IOCTL_START_BICAST:
@@ -516,10 +544,19 @@ int nf_mobility_ioctl(struct inode *inode, struct file *file, unsigned int ioctl
 					else printk(KERN_ALERT "Error: Module status not bicast!\n");
 					write_unlock_bh(&(nfm->flow_lock));
 					break;
+				default:
+					printk(KERN_ALERT "WARNING: Received unknown ioctl parameter for SET STATUS command: %lu\n", ioctl_param); 
 			}
+			break;
+		case NF_MOBILITY_IOCTL_SET_TIMEOUT:
+			write_lock_bh(&(nfm->flow_lock));
+			nfm_timeout = nf_mobility_ms_to_jiffies(ioctl_param);
+			printk(KERN_ALERT "New timeout %lu ms = %d jiffies\n", ioctl_param, nfm_timeout);
+			write_unlock_bh(&(nfm->flow_lock));
 			break;
 		default:
 			printk(KERN_ALERT "WARNING: Received unknown ioctl number (%d), param = %lu\n", ioctl_num, ioctl_param);
+			return -1;
 	}
 	return 0;
 }
@@ -720,6 +757,9 @@ void nf_mobility_cleanup(void)
 		kfree(flow);
 	}
 
+	// Reset pointers to null
+	nfm_flows = NULL;
+
 	// Cancel timer
 	if(timer_pending(&(nfm_delivery_timer)))
 		del_timer(&(nfm_delivery_timer));
@@ -747,6 +787,12 @@ static int __init nf_mobility_init(void)
 	int ret_val;
 	printk(KERN_ALERT "Initializing nf-mobility module\n");
 	
+#ifdef NFM_OLD_NF
+	printk(KERN_ALERT "Using old NF framework, kernel version = %d\n", LINUX_VERSION_CODE);
+#else
+	printk(KERN_ALERT "Using new NF framework, kernel version = %d\n", LINUX_VERSION_CODE);
+#endif
+
 	// IOCTL initialization
 	ret_val = register_chrdev(NF_MOBILITY_MAJOR_NUM, NF_MOBILITY_DEVICE_FILE_NAME, &nf_mobility_fops);
 
@@ -780,12 +826,8 @@ static int __init nf_mobility_init(void)
 	}
 
 	// Set timeout value
-	if(timeout <= 0)
-		nfm_timeout = NF_MOBILITY_DEFAULT_TIMEOUT;
-	else if(timeout * HZ < 1000)
-		nfm_timeout = HZ;
-	else nfm_timeout = timeout * HZ / 1000;
-	
+	nfm_timeout = nf_mobility_ms_to_jiffies(timeout);
+
 	printk(KERN_ALERT " Buffering: packets = %d, bytes = %d\n", nfm_is_buffer_packets, nfm_is_buffer_bytes);
 	printk(KERN_ALERT "Thresholds: packets = %d, bytes = %d\n", nfm_num_buffer_packets, nfm_num_buffer_bytes);
 	printk(KERN_ALERT "   Timeout: input = %d, HZ = %d, duration (HZ) = %d\n", timeout, HZ, nfm_timeout);	
@@ -802,7 +844,8 @@ static void __exit nf_mobility_exit(void)
 	write_unlock_bh(&(nfm->flow_lock));
 	// Potential race condition here...
 	kfree(nfm);
-	
+	nfm = NULL;
+
 	printk(KERN_ALERT "Unregistering Netfilter hook\n");
 	nf_unregister_hook(&nf_mobility_ops);
 	
