@@ -13,8 +13,16 @@ essids[1]=cleanslatewifi3
 num_interfaces=2
 interfaces[0]=ath0
 interfaces[1]=wlan0
-time_between_switches=10
-hold_time=2
+
+
+time_between_switches=60
+
+# Bicast duration
+hold_time=1
+
+# Wait time between new AP association and change active slave
+# (in usec)
+change_active_delay=5000 
 
 num_switches=20
 
@@ -39,7 +47,7 @@ switch_ap()
 	sleep $hold_time
 
 	# Break old association
-	iwconfig ${interfaces[$old_interface]} essid xxxx ap off
+	iwconfig ${interfaces[$cur_interface]} essid "xxxx" ap off
 }
 
 ########
@@ -58,6 +66,8 @@ iwconfig $init_interface essid $init_essid
 sleep 1
 iwconfig $init_interface
 ifenslave -c $bond_name $init_interface
+
+python bicast_noxmsg.py
 
 echo "Press <ENTER> to start."
 read
@@ -80,19 +90,23 @@ for i in `seq 1 $num_switches`; do
 
 	# Make new association
 	iwconfig ${interfaces[$next_interface]} essid ${essids[$next_essid]}
-	sleep 1
+	#sleep $change_active_delay
+	./short-sleep $change_active_delay
 
 	# Change sending interface
-	ifenslave -c $bond_name ${interfaces[$next_interface]}
+	# ifenslave -c $bond_name ${interfaces[$next_interface]}
+	./change-active-slave $bond_name
 	
 	# Hold
+	#let "sleep_time=$hold_time - $change_active_delay"
+	#sleep $sleep_time
 	sleep $hold_time
-
+	
 	# Send stop message to Nox
 	python bicast_noxmsg.py
 	
 	# Break old association
-	iwconfig ${interfaces[$cur_interface]} essid xxxx ap off
+	iwconfig ${interfaces[$cur_interface]} essid "xxxx" ap off
 
 	cur_interface=$next_interface
 	cur_essid=$next_essid
