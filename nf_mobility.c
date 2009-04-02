@@ -566,9 +566,20 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	//int users = atomic_read(&(skb->users));
 	//printk(KERN_ALERT "Accepting packet! skb->users = %d\n", users);
 	
+	// Supported protocols
 	struct iphdr *iph;
-	__be32 saddr, daddr;
 	struct tcphdr *tcph;
+	struct udphdr *udph;
+	
+	/* Field definitions
+	 *
+	 * saddr, daddr			- Source and destination addresses (IP header)
+	 * sport, dport			- source and destination ports (TCP or UDP header)
+	 * start_seq, end_seq   - Starting and ending sequence numbers (TCP header), OR 
+	 * 						  IP ID Number (non-TCP header), where start_seq == end_seq
+	 * protocol 			- Transport protocol (IP header)
+	 */
+	__be32 saddr, daddr; 
 	__be16 sport, dport;
 	__u32 start_seq, end_seq, ack_seq, packet_length;
 	__u8 protocol;
@@ -587,27 +598,40 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		goto nfm_unlock;
 	}
 
-	// For now, we support only TCP connections - not sure how to work with UDP-based flows - we can still do 
-	// duplicate removal, but reordering will be difficult due to possible random IP numbers
+	// Only support TCP and UDP so far
     iph = ip_hdr(skb);
 	protocol = iph->protocol;
-	if(protocol != IPPROTO_TCP){
+	if(protocol != IPPROTO_TCP || protocol != IPPROTO_UDP){
 		ret = NF_ACCEPT;
 		goto nfm_unlock;
 	}
 
-	/* ---- Get packet info ---- */
+	/* ---- Get packet info (set fields) ---- */
 	saddr = ntohl(iph->saddr);
 	daddr = ntohl(iph->daddr);
-	tcph = (struct tcphdr*)(skb->data + sizeof(struct iphdr));
-	sport = ntohs(tcph->source);
-	dport = ntohs(tcph->dest);
-	start_seq = ntohl(tcph->seq);
-	end_seq = start_seq + tcph->syn + tcph->fin + skb->len - sizeof(struct iphdr) - tcph->doff * 4 - 1;
-	ack_seq = ntohl(tcph->ack_seq);
-	checksum = ntohs(tcph->check);
-	packet_length = end_seq - start_seq + 1;
-	//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
+
+	// TCP packet
+	if(protocol == IPPROTO_TCP){
+		tcph = (struct tcphdr*)(skb->data + sizeof(struct iphdr));
+		sport = ntohs(tcph->source);
+		dport = ntohs(tcph->dest);
+		start_seq = ntohl(tcph->seq);
+		end_seq = start_seq + tcph->syn + tcph->fin + skb->len - sizeof(struct iphdr) - tcph->doff * 4 - 1;
+		ack_seq = ntohl(tcph->ack_seq);
+		checksum = ntohs(tcph->check);
+		packet_length = end_seq - start_seq + 1;
+		//nf_mobility_print_incoming_TCP(saddr, daddr, sport, dport); // Debugging purposes
+	}
+	// UDP packet
+	else if(protocol == IPPROTO_UDP){
+   		udph = (struct udphdr*)(skb->data + sizeof(struct iphdr));
+		sport = ntohs(udph->source);
+		dport = ntohs(udph->dest);
+		start_seq = end_seq = ntohs(iph->id);
+		ack_seq = 0;
+		checksum = ntohs(udph->check);
+		packet_length = 1;  
+	}
 if(NFM_DEBUG_HOLE)
 printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq, end_seq, ack_seq, checksum);
 	/* Packet without data, e.g. SYN, FIN packet */
@@ -623,6 +647,7 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 	/* Get flow entry, create one if necessary */
 	flow = nf_mobility_get_flow(protocol, saddr, daddr, sport, dport);
 	if(flow == NULL){
+		// Flow entry not found, create one
 		flow = nf_mobility_create_flow(protocol, saddr, daddr, sport, dport, start_seq);
 		if(flow == NULL){ // Something wrong with flow creation - ignore packet
 			ret = NF_ACCEPT;
@@ -645,7 +670,6 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 	/* Packet behind head of line, check if it is a duplicate
 	 * or a hole-filler */
 	else if(start_seq < flow->head_of_line){ 
-//printk(KERN_ALERT "About to call nf_mobility_match_and_fill_holes()\n");
 		switch(nf_mobility_match_and_fill_holes(flow, start_seq, end_seq)){
 			case NF_MOBILITY_MATCH_FIRST_HOLE:
 				/* Deliver this packet */
@@ -654,11 +678,9 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 
 				/* Check for in-order packets for delivery */
 				if(flow->buffer_head == NULL){
-//printk(KERN_ALERT "Filled first hole, but out-of-order packets already delivered.\n");
 					break;
 				}
 				else if(flow->holes_head == NULL){
-//printk(KERN_ALERT "Filled first (and only) hole, delivering out-of-order packets\n");
 					nf_mobility_deliver_buffer_upto(flow, NULL, ref_fn);
 					break;
 				}
@@ -681,23 +703,22 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 
 			case NF_MOBILITY_MATCH_NO_HOLE:
 				if(end_seq >= flow->head_of_line){
-printk(KERN_ALERT "Rare case...\n");
+					printk(KERN_ALERT "Rare case...\n");
 					nf_mobility_deliver_packet(skb, ref_fn);
 					ret = NF_STOLEN;
 					break;
 				}
 				/* Is duplicate packet, drop it */
-//printk(KERN_ALERT "Dropping duplicate\n");
-if(NFM_DEBUG_DUPE){
-nfm_dupe_count++;
-if(nfm_dupe_count % 20 == 0)
-printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
-}
+				if(NFM_DEBUG_DUPE){
+					nfm_dupe_count++;
+					if(nfm_dupe_count % 20 == 0)
+					printk(KERN_ALERT "Dropped %d duplicates\n", nfm_dupe_count);
+				}
 
 				ret = NF_DROP;
 				break;
 			default:
-				printk(KERN_ALERT "ERROR in nf_mobility module: Unexpected hole-matching result!\n");
+				printk(KERN_ALERT "Error in nf_mobility module: Unexpected hole-matching result!\n");
 				ret = NF_ACCEPT;
 		}
 		if(end_seq >= flow->head_of_line)
