@@ -601,7 +601,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 	// Only support TCP and UDP so far
     iph = ip_hdr(skb);
 	protocol = iph->protocol;
-	if(protocol != IPPROTO_TCP || protocol != IPPROTO_UDP){
+	if(protocol != IPPROTO_TCP && protocol != IPPROTO_UDP){
 		ret = NF_ACCEPT;
 		goto nfm_unlock;
 	}
