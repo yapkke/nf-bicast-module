@@ -6,7 +6,8 @@ import struct
 
 hostmac = int("0x001cf0ed985a", 16);
 noxhost = "192.168.2.254"
-noxport = 2603
+#noxport = 2603
+noxport = 6633
 sock = noxmsg.NOXChannel(noxhost, noxport);
 noxmsgtype = int("0x12",16);
 sock.send(noxmsgtype, struct.pack("Q",noxmsg.htonll(hostmac)));

@@ -6,10 +6,10 @@
 bond_name=bond0
 bonding_mac_addr=00:1c:f0:ed:98:5a
 init_interface=ath0
-init_essid=cleanslatewifi2
+init_essid=cleanslatewifi1
 num_essids=2
-essids[0]=cleanslatewifi2
-essids[1]=cleanslatewifi3
+essids[0]=cleanslatewifi1
+essids[1]=cleanslatewifi2
 num_interfaces=2
 interfaces[0]=ath0
 interfaces[1]=wlan0
