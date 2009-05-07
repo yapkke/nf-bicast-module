@@ -78,15 +78,15 @@ static bool seq_gt(__u32 x, __u32 y){
 }
 
 static bool seq_geq(__u32 x, __u32 y){
-	return x == y || nf_mobility_seq_gt(x, y);
+	return x == y || seq_gt(x, y);
 }
 
 static bool seq_lt(__u32 x, __u32 y){
-	return !nf_mobility_seq_geq(x, y);
+	return !seq_geq(x, y);
 }
 
 static bool seq_leq(__u32 x, __u32 y){
-	return !nf_mobility_seq_gt(x, y);
+	return !seq_gt(x, y);
 }
 
 static __u32 seq_inc(__u32 x){
@@ -708,7 +708,7 @@ static unsigned int nf_mobility_hook(unsigned int hooknum, struct sk_buff *skb, 
 		// Set sequence number wrapping parameters
 		SEQ_NUM_MIN = NF_MOBILITY_IP_NUM_MIN;
 		SEQ_NUM_MAX = NF_MOBILITY_IP_NUM_MAX;
-		SEQ_NUM_WRAP_THRESHOLD = NF_MOBILITY_IP_WRAP_THRESHOLD;
+		SEQ_NUM_WRAP_THRESHOLD = NF_MOBILITY_IP_NUM_WRAP_THRESHOLD;
 
    		udph = (struct udphdr*)(skb->data + sizeof(struct iphdr));
 		sport = ntohs(udph->source);
