@@ -4,14 +4,17 @@
 # Run constants 
 ################
 bond_name=bond0
-bonding_mac_addr=00:1c:f0:ed:98:5a
-init_interface=ath0
+# Old D-link card
+#bonding_mac_addr=00:1c:f0:ed:98:5a
+# New D-link card
+bonding_mac_addr=00:1c:f0:ee:5a:d1
+init_interface=ath1
 init_essid=cleanslatewifi1
 num_essids=2
 essids[0]=cleanslatewifi1
 essids[1]=cleanslatewifi2
 num_interfaces=2
-interfaces[0]=ath0
+interfaces[0]=ath1
 interfaces[1]=wlan0
 
 
@@ -60,6 +63,8 @@ ifconfig $bond_name hw ether $bonding_mac_addr
 ifconfig $bond_name up
 ifconfig $bond_name
 cat /proc/net/bonding/$bond_name
+
+route add default gw 192.168.2.254
 
 # Initialize association and active slave
 iwconfig $init_interface essid $init_essid
