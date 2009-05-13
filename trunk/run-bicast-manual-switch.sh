@@ -17,11 +17,12 @@ num_interfaces=2
 interfaces[0]=wlan0
 interfaces[1]=ath1
 
-
-time_between_switches=60
+# manually switch
+# time_between_switches=60
 
 # Bicast duration (in seconds)
-hold_time=10
+#hold_time=10
+DEFAULT_HOLD_TIME=10
 
 # Wait time between new AP association and change active slave
 # (in usec)
@@ -81,13 +82,19 @@ read
 echo "Starting bicast filtering..."
 ./nf-start-bicast
 
-sleep $time_between_switches
-
 cur_inteface=$init_interface
 cur_essid=$init_essid
 
 # Switching
 for i in `seq 1 $num_switches`; do
+	echo "Enter hold time in seconds (default = $DEFAULT_HOLD_TIME): "
+	read hold_time
+
+	if [ "$hold_time" = "" ]; then
+		hold_time=$DEFAULT_HOLD_TIME
+	fi
+	echo "hold time = $hold_time"
+
 	let "next_interface=($cur_interface+1)%$num_interfaces"
 	let "next_essid=($cur_essid+1)%$num_essids"
 
@@ -115,8 +122,6 @@ for i in `seq 1 $num_switches`; do
 
 	cur_interface=$next_interface
 	cur_essid=$next_essid
-
-	sleep $time_between_switches
 done
 
 # Stop bicast filtering in Netfilter module
