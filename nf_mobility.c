@@ -821,6 +821,9 @@ printk(KERN_ALERT "Packet Received: (%u, %u)   Ack: %u   Check: %u\n", start_seq
 		else ret = NF_ACCEPT;
 		flow->head_of_line = seq_inc(end_seq); /* Update head of line */
 	}
+	if(flow->head_of_line == 0){
+		printk(KERN_ALERT "********* seq. num. wrapped around: head of line == 0 *********");
+	}
 nfm_unlock:
 	write_unlock_bh(&(nfm->flow_lock));
 	return ret;
