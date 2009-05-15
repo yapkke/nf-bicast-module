@@ -28,11 +28,26 @@ int main(int argc, char *argv[])
 	/* Open a basic socket */
 	int skfd = -1;
 	char *bond_name;
+	char *act_slave;
 	if(argc <= 1) {
 		printf("Need bond name!\n");
 		return -1;
 	}
+	if(argc <= 2) {
+		printf("Need the new active slave name too!\n");
+		return -1;
+	}
 	bond_name = argv[1];
+	act_slave = argv[1];
+	if(strlen(bond_name) >= IFNAMSIZ) {
+		printf("Shorter bond-name please!\n");
+		return -1;
+	}
+	if(strlen(act_slave) >= IFNAMSIZ) {
+		printf("Shorter slave-name please!\n");
+		return -1;
+	}
+
 	if ((skfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		printf("Failed to open socket\n");
 		return -1;
@@ -40,6 +55,7 @@ int main(int argc, char *argv[])
 
 	struct ifreq ifr;
 	strcpy(ifr.ifr_name, bond_name);
+	strcpy(ifr.ifr_slave, act_slave);
 	if (ioctl(skfd, SIOCBONDHOOLOCKTEST, &ifr) < 0) {
 		printf("ioctl call failed :(\n");
 		return -1;

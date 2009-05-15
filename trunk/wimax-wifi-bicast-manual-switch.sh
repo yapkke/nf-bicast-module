@@ -115,7 +115,7 @@ for i in `seq 1 $num_switches`; do
 
 	# Change sending interface
 	# ifenslave -c $bond_name $next_interface
-	./change-active-slave $bond_name
+	./change-active-slave $bond_name $next_interface
 	
 	# Hold
 	sleep $hold_time
