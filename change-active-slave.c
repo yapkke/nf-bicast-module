@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	bond_name = argv[1];
-	act_slave = argv[1];
+	act_slave = argv[2];
 	if(strlen(bond_name) >= IFNAMSIZ) {
 		printf("Shorter bond-name please!\n");
 		return -1;
