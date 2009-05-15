@@ -7,12 +7,12 @@ bond_name=bond0
 # Need to use Wimax MAC
 bonding_mac_addr=00:50:c2:74:d1:08
 # Wimax-specific IP address
-bond_ip_address=192.168.2.227
+bond_ip_address=192.168.2.225
 # Wimax interface is normally eth1
 wimax_interface=eth1
 wifi_interface=wlan0
 wifi_essid=cleanslatewifi1
-init_interface=wlan0
+init_interface=eth1
 
 wimax_up_script="./wimax-bicast-up.sh"
 wimax_down_script="./wimax-bicast-down.sh"
@@ -36,14 +36,24 @@ cur_interface=$init_interface
 ########
 
 # Set MAC address of bonding driver
+ifconfig $wifi_interface down
+ifconfig $wimax_interface down
 ifconfig $bond_name down
 ifconfig $bond_name hw ether $bonding_mac_addr
 ifconfig $bond_name up
+ifconfig $wifi_interface up
+ifconfig $wimax_interface up
 ifconfig $bond_name $bond_ip_address
 ifconfig $bond_name
 cat /proc/net/bonding/$bond_name
 
 route add default gw 192.168.2.254
+
+# Dessociate everything first in the beginning
+iwconfig $wifi_interface essid xxxx ap off
+$wimax_down_script
+echo -e "\r\n"
+sleep 5
 
 # Initialize association and active slave
 if [ "$init_interface" = "$wifi_interface" ]; then
@@ -53,10 +63,13 @@ if [ "$init_interface" = "$wifi_interface" ]; then
 else
 	$wimax_up_script
 	sleep $wimax_association_time
+	echo "After Wimax association sleep time"
 fi
 ifenslave -c $bond_name $init_interface
 
+echo "Before sending bicast noxmsg"
 python bicast_noxmsg.py
+echo "After sending bicast noxmsg"
 
 echo "Press <ENTER> to start."
 read

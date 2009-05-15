@@ -8,6 +8,7 @@ bond_name=bond0
 #bonding_mac_addr=00:1c:f0:ed:98:5a
 # New D-link card
 bonding_mac_addr=00:1c:f0:ee:5a:d1
+bonding_ip_address=192.168.2.140
 init_interface=wlan0
 init_essid=cleanslatewifi1
 num_essids=2
@@ -34,38 +35,38 @@ cur_interface=$init_interface
 cur_essid=$init_essid
 next_interface=1
 next_essid=1
-
-#############
-# FUNCTIONS #
-#############
-switch_ap()
-{
-	# Make new association
-	iwconfig ${interfaces[$next_interface]} essid ${essids[$next_essid]}
-	sleep 1
-	
-	# Change sending interface
-	ifenslave -c $bond_name ${interfaces[$next_interface]}
-	
-	# Hold
-	sleep $hold_time
-
-	# Break old association
-	iwconfig ${interfaces[$cur_interface]} essid "xxxx" ap off
-}
+(( x=$num_interfaces-1 ))
 
 ########
-# Init #
+# MAIN #
 ########
 
 # Set MAC address of bonding driver
+for i in `seq 0 $x`; do
+		cmd="ifconfig ${interfaces[$i]} down"
+		echo $cmd
+		$cmd
+done
 ifconfig $bond_name down
 ifconfig $bond_name hw ether $bonding_mac_addr
 ifconfig $bond_name up
+for i in `seq 0 $x`; do
+		cmd="ifconfig ${interfaces[$i]} up"
+		echo $cmd
+		$cmd
+done
+ifconfig $bond_name $bonding_ip_address
 ifconfig $bond_name
 cat /proc/net/bonding/$bond_name
 
 route add default gw 192.168.2.254
+
+# Dessociate everything in the beginning
+for i in `seq 0 $x`; do
+		cmd="iwconfig ${interfaces[$i]} essid xxxx ap off"
+		echo $cmd
+		$cmd
+done
 
 # Initialize association and active slave
 iwconfig $init_interface essid $init_essid
