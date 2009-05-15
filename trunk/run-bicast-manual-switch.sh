@@ -27,7 +27,7 @@ DEFAULT_HOLD_TIME=10
 
 # Wait time between new AP association and change active slave
 # (in usec)
-change_active_delay=5000 
+change_active_delay=500000 
 
 num_switches=20
 
