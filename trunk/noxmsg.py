@@ -8,8 +8,8 @@ import socket
 import struct
 
 def htonll(value):
-    val = struct.unpack("HHHH",struct.pack("Q",value))
-    return struct.unpack("Q",struct.pack("HHHH",socket.htons(val[3]),socket.htons(val[2]),socket.htons(val[1]), socket.htons(val[0])))[0]
+    val = struct.unpack("LL",struct.pack("Q",value))
+    return struct.unpack("Q",struct.pack("LL",socket.htonl(val[1]),socket.htonl(val[0])))[0]
 
 #def htonll(value):
 #    val = struct.unpack("LL",struct.pack("Q",value))
