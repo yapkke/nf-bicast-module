@@ -5,9 +5,9 @@
 ################
 bond_name=bond0
 # Need to use Wimax MAC
-bonding_mac_addr=00:50:c2:74:d1:08
+bonding_mac_addr=00:50:c2:74:d1:0a
 # Wimax-specific IP address
-bond_ip_address=192.168.2.225
+bond_ip_address=192.168.2.227
 # Wimax interface is normally eth1
 wimax_interface=eth1
 wifi_interface=wlan0
@@ -117,12 +117,15 @@ for i in `seq 1 $num_switches`; do
 	# ifenslave -c $bond_name $next_interface
 	./change-active-slave $bond_name $next_interface
 	
+	echo "Bicasting started..."
 	# Hold
 	sleep $hold_time
 	
+	echo "Ending bicast - sending stop to Nox"
 	# Send stop message to Nox
 	python bicast_noxmsg.py
 	
+	echo "Breaking old link"
 	# Break old association
 	if [ "$cur_interface" = "$wifi_interface" ]; then
 		iwconfig $cur_interface essid "xxxx" ap off
@@ -130,6 +133,7 @@ for i in `seq 1 $num_switches`; do
 		$wimax_down_script
 		echo -e "\r\n"
 	fi
+	echo "Old link broken, now back to 1 link"
 
 	cur_interface="$next_interface"
 done
