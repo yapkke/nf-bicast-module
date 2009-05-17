@@ -12,9 +12,10 @@ bonding_ip_address=192.168.2.140
 num_interfaces=2
 interfaces[0]=wlan0
 interfaces[1]=ath1
-num_essids=2
+num_essids=3
 essids[0]=cleanslatewifi1
 essids[1]=cleanslatewifi3
+essids[2]=cleanslatewifi2
 # Init interfaces are array indices into the essids and interfaces arrays
 init_interface=0
 init_essid=0
