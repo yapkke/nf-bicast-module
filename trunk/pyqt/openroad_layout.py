@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '/Users/naomi/Desktop/python/OpenRoad/openroad.ui'
 #
-# Created: Sun Jul 12 00:42:47 2009
+# Created: Mon Jul 13 01:00:29 2009
 #      by: PyQt4 UI code generator 4.5.2-snapshot-20090703
 #
 # WARNING! All changes made in this file will be lost!
@@ -146,13 +146,13 @@ class Ui_MainWindow(object):
         self.label_wimax_status.setGeometry(QtCore.QRect(310, 320, 61, 17))
         self.label_wimax_status.setObjectName("label_wimax_status")
         self.wifi_status_1 = QtGui.QLabel(self.centralwidget)
-        self.wifi_status_1.setGeometry(QtCore.QRect(390, 280, 61, 17))
+        self.wifi_status_1.setGeometry(QtCore.QRect(390, 280, 111, 17))
         self.wifi_status_1.setObjectName("wifi_status_1")
         self.wifi_status_2 = QtGui.QLabel(self.centralwidget)
-        self.wifi_status_2.setGeometry(QtCore.QRect(390, 300, 61, 17))
+        self.wifi_status_2.setGeometry(QtCore.QRect(390, 300, 121, 17))
         self.wifi_status_2.setObjectName("wifi_status_2")
         self.wimax_status = QtGui.QLabel(self.centralwidget)
-        self.wimax_status.setGeometry(QtCore.QRect(390, 321, 61, 17))
+        self.wimax_status.setGeometry(QtCore.QRect(390, 321, 131, 17))
         self.wimax_status.setObjectName("wimax_status")
         self.OutputText = QtGui.QPlainTextEdit(self.centralwidget)
         self.OutputText.setGeometry(QtCore.QRect(72, 381, 651, 201))
