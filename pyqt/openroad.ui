@@ -354,14 +354,14 @@
      <widget class="QLabel" name="label_WifiAssocTime">
       <property name="geometry">
        <rect>
-        <x>166</x>
+        <x>76</x>
         <y>21</y>
-        <width>151</width>
+        <width>241</width>
         <height>20</height>
        </rect>
       </property>
       <property name="text">
-       <string>WiFi Association Time</string>
+       <string>WiFi Association Time (micro second)</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_gw">

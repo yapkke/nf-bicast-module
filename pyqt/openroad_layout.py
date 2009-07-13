@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '/Users/naomi/Desktop/python/OpenRoad/openroad.ui'
+# Form implementation generated from reading ui file './openroad.ui'
 #
-# Created: Mon Jul 13 01:00:29 2009
+# Created: Mon Jul 13 17:42:55 2009
 #      by: PyQt4 UI code generator 4.5.2-snapshot-20090703
 #
 # WARNING! All changes made in this file will be lost!
@@ -105,7 +105,7 @@ class Ui_MainWindow(object):
         self.wifiAssoTimeSpinBox.setProperty("value", QtCore.QVariant(50000))
         self.wifiAssoTimeSpinBox.setObjectName("wifiAssoTimeSpinBox")
         self.label_WifiAssocTime = QtGui.QLabel(self.tabGeneral)
-        self.label_WifiAssocTime.setGeometry(QtCore.QRect(166, 21, 151, 20))
+        self.label_WifiAssocTime.setGeometry(QtCore.QRect(76, 21, 241, 20))
         self.label_WifiAssocTime.setObjectName("label_WifiAssocTime")
         self.label_gw = QtGui.QLabel(self.tabGeneral)
         self.label_gw.setGeometry(QtCore.QRect(253, 50, 61, 20))
@@ -211,7 +211,7 @@ class Ui_MainWindow(object):
         self.editWimaxIF.setText(QtGui.QApplication.translate("MainWindow", "eth1", None, QtGui.QApplication.UnicodeUTF8))
         self.isUseWiMax.setText(QtGui.QApplication.translate("MainWindow", "Use WiMAX", None, QtGui.QApplication.UnicodeUTF8))
         self.settingTab.setTabText(self.settingTab.indexOf(self.tabWimax), QtGui.QApplication.translate("MainWindow", "WiMAX", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_WifiAssocTime.setText(QtGui.QApplication.translate("MainWindow", "WiFi Association Time", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_WifiAssocTime.setText(QtGui.QApplication.translate("MainWindow", "WiFi Association Time (micro second)", None, QtGui.QApplication.UnicodeUTF8))
         self.label_gw.setText(QtGui.QApplication.translate("MainWindow", "Gateway ", None, QtGui.QApplication.UnicodeUTF8))
         self.editGW.setText(QtGui.QApplication.translate("MainWindow", "192.168.2.254", None, QtGui.QApplication.UnicodeUTF8))
         self.settingTab.setTabText(self.settingTab.indexOf(self.tabGeneral), QtGui.QApplication.translate("MainWindow", "General", None, QtGui.QApplication.UnicodeUTF8))
