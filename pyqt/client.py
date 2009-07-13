@@ -1,14 +1,8 @@
 from PyQt4.QtCore import (QDate, Qt, SIGNAL, pyqtSignature)
 from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow)
-import subprocess
+from subprocess import *
 import openroad_layout
-import os
-import sys
-#for bicast_noxmsg
-import noxmsg
-import socket
-import struct
-import time
+import sys, os
 
 class OpenRoadClient(QMainWindow,
             openroad_layout.Ui_MainWindow):
@@ -17,130 +11,129 @@ class OpenRoadClient(QMainWindow,
         super(OpenRoadClient, self).__init__(parent)
         self.setupUi(self)
         self.ButtonRun.setFocus()
-	# init: variables
-	# APs
-  	self.ap1 = self.editAP1.text()
-  	self.ap2 = self.editAP2.text()
-  	self.ap3 = self.editAP3.text()
-	# WiFi Interfaces
-  	self.wifi1 = self.editWiFiIF1.text()
-  	self.wifi2 = self.editWiFiIF2.text()
-  	# WiMAX
-	self.wimax = self.editWimaxIF.text()
-  	self.wimax_enable = self.isUseWiMax.isChecked() 
-	# Bonding Drivers
+        # init: variables
+        # APs
+        self.ap1 = self.editAP1.text()
+        self.ap2 = self.editAP2.text()
+        self.ap3 = self.editAP3.text()
+        # WiFi Interfaces
+        self.wifi1 = self.editWiFiIF1.text()
+        self.wifi2 = self.editWiFiIF2.text()
+        # WiMAX
+        self.wimax = self.editWimaxIF.text()
+        self.wimax_enable = self.isUseWiMax.isChecked() 
+        # Bonding Drivers
         self.bond_name = self.editBondMacIF.text()
-  	self.bonding_mac_address = self.editBondMac.text()
-  	if self.wimax_enable:
- 	 	self.bonding_ip_address = self.editBondIP.text()
-  	else:
-		self.bonding_ip_address = self.editBondIP_nowimax.text()
-  	# General Settings
-  	self.wifi_association_time = self.wifiAssoTimeSpinBox.value()
-	self.gateway = self.editGW.text()
-	self.updateUi()
+        self.bonding_mac_address = self.editBondMac.text()
+        if self.wimax_enable:
+            self.bonding_ip_address = self.editBondIP.text()
+        else:
+            self.bonding_ip_address = self.editBondIP_nowimax.text()
+        # General Settings
+        self.wifi_association_time = self.wifiAssoTimeSpinBox.value()
+        self.gateway = self.editGW.text()
+        self.updateUi()
 
     @pyqtSignature("QString")
     def on_editBondMacIF_textEdited(self, text):
         self.bond_name = text;
-	self.OutputText.insertPlainText("Bonding InterFace:"+self.bond_name+"\n")
+        self.OutputText.insertPlainText("Bonding InterFace:"+self.bond_name+"\n")
         self.updateUi()
     
     @pyqtSignature("QString")
     def on_editBondMac_textEdited(self, text):
         self.bonding_mac_address = text;
-	self.OutputText.insertPlainText("Bonding MAC Address:"+self.bonding_mac_address+"\n")
+        self.OutputText.insertPlainText("Bonding MAC Address:"+self.bonding_mac_address+"\n")
         self.updateUi()
     
     @pyqtSignature("QString")
     def on_editBondIP_textEdited(self, text):
         if self.wimax_enable:
-	        self.bonding_ip_address = text;
-		self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
-	        self.updateUi()
+            self.bonding_ip_address = text
+        self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
+        self.updateUi()
     
     @pyqtSignature("QString")
     def on_editBondIP_nowimax_textEdited(self, text):
         if not self.wimax_enable:
-	        self.bonding_ip_address = text;
-		self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
-  	else:
-		self.OutputText.insertPlainText("WiMAX is enabled. Won't use the bonding IP address:"+text+"\n")
-	self.updateUi()
+            self.bonding_ip_address = text
+            self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
+        else:
+            self.OutputText.insertPlainText("WiMAX is enabled. Won't use the bonding IP address:"+text+"\n")
+            self.updateUi()
 
     @pyqtSignature("QString")
     def on_editAP1_textEdited(self, text):
-        self.ap1 = text;
-	self.OutputText.insertPlainText("AP1:"+self.ap1+"\n")
+        self.ap1 = text
+        self.OutputText.insertPlainText("AP1:"+self.ap1+"\n")
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editAP2_textEdited(self, text):
-        self.ap2 = text;
-	self.OutputText.insertPlainText("AP2:"+self.ap2+"\n")
+        self.ap2 = text
+        self.OutputText.insertPlainText("AP2:"+self.ap2+"\n")
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editAP3_textEdited(self, text):
-        self.ap3 = text;
-	self.OutputText.insertPlainText("AP3:"+self.ap3+"\n")
+        self.ap3 = text
+        self.OutputText.insertPlainText("AP3:"+self.ap3+"\n")
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editWiFiIF1_textEdited(self, text):
-        self.wifi1 = text;
-	self.OutputText.insertPlainText("#1 WiFi Interface:"+self.wifi1+"\n")
+        self.wifi1 = text
+        self.OutputText.insertPlainText("#1 WiFi Interface:"+self.wifi1+"\n")
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editWiFiIF2_textEdited(self, text):
-        self.wifi2 = text;
-	self.OutputText.insertPlainText("#2 WiFi Interface:"+self.wifi2+"\n")
+        self.wifi2 = text
+        self.OutputText.insertPlainText("#2 WiFi Interface:"+self.wifi2+"\n")
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editWimaxIF_textEdited(self, text):
-        self.wimax = text;
-	self.OutputText.insertPlainText("WiMAX Interface:"+self.wimax+"\n")
+        self.wimax = text
+        self.OutputText.insertPlainText("WiMAX Interface:"+self.wimax+"\n")
         self.updateUi()
 
     @pyqtSignature('bool')
     def on_isUseWiMax_toggled(self, checked):
         self.wimax_enable = checked
-	if self.wimax_enable:
-	       self.bonding_ip_address = self.editBondIP.text()
-	else:
-	       self.bonding_ip_address = self.editBondIP_nowimax.text()
-	self.OutputText.insertPlainText("WiMAX Enable:"+str(self.wimax_enable)+"\n")
-	self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
-        self.updateUi()
+        if self.wimax_enable:
+                self.bonding_ip_address = self.editBondIP.text()
+        else:
+            self.bonding_ip_address = self.editBondIP_nowimax.text()
+            self.OutputText.insertPlainText("WiMAX Enable:"+str(self.wimax_enable)+"\n")
+            self.OutputText.insertPlainText("Bonding IP Address:"+self.bonding_ip_address+"\n")
+            self.updateUi()
 
     @pyqtSignature("int")
     def on_wifiAssoTimeSpinBox_valueChanged(self, value):
-	self.wifi_association_time = value;
-	self.OutputText.insertPlainText("WiFi Association Time:"+str(self.wifi_association_time)+"\n")
+        self.wifi_association_time = value;
         self.updateUi()
 
     @pyqtSignature("QString")
     def on_editGW_textEdited(self, text):
-        self.gateway = text;
-	self.OutputText.insertPlainText("Gateway:"+self.gateway+"\n")
+        self.gateway = text
+        self.OutputText.insertPlainText("Gateway:"+self.gateway+"\n")
         self.updateUi()
     
     @pyqtSignature('')
     def on_ButtonRun_clicked(self):
-              self.demo_run()
- 	
+        self.demo_run()
+        
     def updateUi(self):
         a=1
-	#self.OutputText.setPlainText(self.bond_name)
-	#amount = (self.priceSpinBox.value() *
-	#          self.quantitySpinBox.value())
-	#enable = not self.customerLineEdit.text().isEmpty() and amount
-	#self.buttonBox.button(
-	#        QDialogButtonBox.Ok).setEnabled(enable)
-	#self.amountLabel.setText(str(amount))
-
+        #self.OutputText.setPlainText(self.bond_name)
+        #amount = (self.priceSpinBox.value() *
+        #          self.quantitySpinBox.value())
+        #enable = not self.customerLineEdit.text().isEmpty() and amount
+        #self.buttonBox.button(
+        #        QDialogButtonBox.Ok).setEnabled(enable)
+        #self.amountLabel.setText(str(amount))
+    
     def exe_os_cmd(self, cmd):
 	#os.system(cmd)
 	#p = subprocess.Popen( cmd ,stdout=subprocess.PIPE,stderr=subprocess.PIPE) 
@@ -154,6 +147,34 @@ class OpenRoadClient(QMainWindow,
 		self.OutputText.insertPlainText("Error: " + stderr.read()+ "\n")
 	except OSError:
 		pass
+
+    # Demo command-related stuff
+    def interface_up_cmd(self, interface):
+        return "ifconfig %s up" % interface
+
+    def interface_down_cmd(self, interface):
+        return "ifconfig %s down" % interface
+
+    def wifi_associate_cmd(self, interface, ap):
+        return "iwconfig %s essid %s" % (interface, ap)
+
+    def wifi_dissociate_cmd(self, interface):
+        return "iwconfig %s essid xxxx ap off" % interface
+
+    def wimax_associate(self):
+        os.system("./wimax-bicast-up.sh")
+
+    def wimax_dissociate(self):
+        os.system("./wimax-bicast-down.sh")
+
+    def change_active_slave(self, new_active_slave):
+        cmd = "./change-active-slave %s %s" % (self.bond_name, new_active_slave) 
+
+    def signal_quit_to_nox(self):
+        ## TODO: Modify bicast_noxmsg.py so that it's parameterized with GUI's
+        ## input
+        pass
+
         
     def send_bicast_msg(self):
       	hostmac = int("0x001cf0ee5ad1", 16);
