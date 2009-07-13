@@ -124,27 +124,22 @@ class OpenRoadClient(QMainWindow,
     def on_ButtonRun_clicked(self):
         self.demo_run()
         
+    #currently a useless function :p
     def updateUi(self):
         a=1
         #self.OutputText.setPlainText(self.bond_name)
-        #amount = (self.priceSpinBox.value() *
-        #          self.quantitySpinBox.value())
-        #enable = not self.customerLineEdit.text().isEmpty() and amount
-        #self.buttonBox.button(
-        #        QDialogButtonBox.Ok).setEnabled(enable)
-        #self.amountLabel.setText(str(amount))
     
+    # os.popen is out-dated, but I haven't find out how to use subprocess
     def exe_os_cmd(self, cmd):
-	#os.system(cmd)
 	#p = subprocess.Popen( cmd ,stdout=subprocess.PIPE,stderr=subprocess.PIPE) 
 	#output, errors = p.communicate()
 	self.OutputText.insertPlainText("Executing: "+cmd+"\n")
 	try:
 		stdin, stdout, stderr = os.popen3(cmd)
   		#add expr for if stdout is not empty
-		self.OutputText.insertPlainText("Output: " + stdout.read()+"\n")
+		self.OutputText.insertPlainText("Output: " + str(stdout.read())+"\n")
 		#if stderr is not empty
-		self.OutputText.insertPlainText("Error: " + stderr.read()+ "\n")
+		self.OutputText.insertPlainText("Error: " + str(stderr.read())+ "\n")
 	except OSError:
 		pass
 
@@ -162,13 +157,14 @@ class OpenRoadClient(QMainWindow,
         return "iwconfig %s essid xxxx ap off" % interface
 
     def wimax_associate(self):
-        os.system("./wimax-bicast-up.sh")
+        self.exe_os_cmd("./wimax-bicast-up.sh")
 
     def wimax_dissociate(self):
-        os.system("./wimax-bicast-down.sh")
+        self.exe_os_cmd("./wimax-bicast-down.sh")
 
     def change_active_slave(self, new_active_slave):
         cmd = "./change-active-slave %s %s" % (self.bond_name, new_active_slave) 
+	self.exe_os_cmd(cmd)
 
     def signal_quit_to_nox(self):
         ## TODO: Modify bicast_noxmsg.py so that it's parameterized with GUI's
@@ -176,42 +172,43 @@ class OpenRoadClient(QMainWindow,
         pass
 
         
-    def send_bicast_msg(self):
-      	hostmac = int("0x001cf0ee5ad1", 16);
-      	noxhost = "192.168.2.254"
-      	noxport = 2603
+    def send_bicast_msg(self, hostmac=int("0x001cf0ee5ad1", 16), noxhost="192.168.2.254", noxport=2603):
+	#hostmac = int("0x001cf0ee5ad1", 16);
+	#noxhost = "192.168.2.254"
+	#noxport = 2603
 	#noxport = 6633
       	sock = noxmsg.NOXChannel(noxhost, noxport);
       	noxmsgtype = int("0x12",16);
       	sock.send(noxmsgtype, struct.pack("Q",noxmsg.htonll(hostmac)));
-	#sock.send(noxmsgtype, noxmsg.htonll(hostmac));
-	#sock.send("test");
-	self.OutputText.insertPlainText("Send Bicast Message:")
+	self.OutputText.insertPlainText("Sending Bicast Message:  ")
       	self.OutputText.insertPlainText("Bicast Host : "+str(hostmac))
       	self.OutputText.insertPlainText("NOX Host : "+noxhost)
-      	self.OutputText.insertPlainText("NOX Port : "+str(noxport))
+      	self.OutputText.insertPlainText("NOX Port : "+str(noxport) + "\n")
 
     def device_init(self):
-	cmd = "ifconfig %s down" % (self.wifi1)
-	self.exe_os_cmd(cmd)
-	cmd = "ifconfig %s down" % (self.wifi2)
-	self.exe_os_cmd(cmd)
+	#cmd = "ifconfig %s down" % (self.wifi1)
+	self.exe_os_cmd(self.interface_down_cmd(self.wifi1))
+	#cmd = "ifconfig %s down" % (self.wifi2)
+	self.exe_os_cmd(self.interface_down_cmd(self.wifi2))
 	if self.wimax_enable:
-		cmd = "ifconfig %s down" % (self.wimax)
-		self.exe_os_cmd(cmd)
-	cmd = "ifconfig %s down" % (self.bond_name)
-	self.exe_os_cmd(cmd)
+		#cmd = "ifconfig %s down" % (self.wimax)
+		self.exe_os_cmd(self.interface_down_cmd(self.wimax))
+	#cmd = "ifconfig %s down" % (self.bond_name)
+	self.exe_os_cmd(self.interface_down_cmd(self.bond_name))
+
 	cmd = "ifconfig %s hw ether %s" % (self.bond_name, self.bonding_mac_address)
 	self.exe_os_cmd(cmd)
-	cmd = "ifconfig %s up" % (self.bond_name)
-	self.exe_os_cmd(cmd)
-	cmd = "ifconfig %s up" % (self.wifi1)
-	self.exe_os_cmd(cmd)
-	cmd = "ifconfig %s up" % (self.wifi2)
-	self.exe_os_cmd(cmd)
+
+	#cmd = "ifconfig %s up" % (self.bond_name)
+	self.exe_os_cmd(self.interface_up_cmd(self.bond_name))
+	#cmd = "ifconfig %s up" % (self.wifi1)
+	self.exe_os_cmd(self.interface_up_cmd(self.wifi1))
+	#cmd = "ifconfig %s up" % (self.wifi2)
+	self.exe_os_cmd(self.interface_up_cmd(self.wifi2))
 	if self.wimax_enable:
-		cmd = "ifconfig %s up" % (self.wimax)
-		self.exe_os_cmd(cmd)
+		#cmd = "ifconfig %s up" % (self.wimax)
+		self.exe_os_cmd(self.interface_up_cmd(self.wimax))
+
 	cmd = "ifconfig %s %s" % (self.bond_name, self.bonding_ip_address)
 	self.exe_os_cmd(cmd)
 	cmd = "ifconfig %s" % (self.bond_name)
@@ -222,34 +219,40 @@ class OpenRoadClient(QMainWindow,
 	self.exe_os_cmd(cmd)
 	self.OutputText.insertPlainText("Devices Initialized.\n");
 
-    def deassociate_devices(self):
-	# Dissociate everything in the beginning
-      	cmd = "iwconfig %s essid xxxx ap off" % (self.wifi1)
-	self.exe_os_cmd(cmd)
-      	cmd = "iwconfig %s essid xxxx ap off" % (self.wifi2)
-	self.exe_os_cmd(cmd)
-	if self.wimax_enable:
-		cmd = "./wimax-bicast-down.sh"
-		self.exe_os_cmd(cmd)
-	self.OutputText.insertPlainText("Dissociated all interfaces. Start Demo Now.\n");
-
     def associate_wifi(self, wifiIF, ap):
       	# Initialize association and active slave
-      	cmd = "iwconfig %s essid %s" % (wifiIF, ap)
-	self.exe_os_cmd(cmd)
-  	cmd = "./short-sleep %d" % (self.wifi_association_time)
-	self.exe_os_cmd(cmd)
-      	cmd = "./change-active-slave %s %s" % (self.bond_name, wifiIF)
-	self.exe_os_cmd(cmd)
+	#cmd = "iwconfig %s essid %s" % (wifiIF, ap)
+	self.exe_os_cmd(self.wifi_associate_cmd(wifiIF, ap))
+  	time.sleep(self.wifi_association_time/1000000)	
+
+	#cmd = "./change-active-slave %s %s" % (self.bond_name, wifiIF)
+  	self.change_active_slave(self.bond_name, wifiIF)
 	if wifiIF == self.wifi1:
 		self.wifi_status_1.setText(ap)
 	elif wifiIF == self.wifi2:
 		self.wifi_status_2.setText(ap)
 	self.OutputText.insertPlainText(wifiIF + " is asscociated with " +ap +"\n")
 
+    def dissociate_wifi(self, wifiIF):
+	self.exe_os_cmd(self.wifi_dissociate_cmd(wifiIF))	
+	if wifiIF == self.wifi1:
+                self.wifi_status_1.setText("N/A")
+        elif wifiIF == self.wifi2:
+                self.wifi_status_2.setText("N/A")
+        self.OutputText.insertPlainText(wifiIF + " is disscociated from AP\n")
+
+    def dissociate_devices(self):
+	# Dissociate everything in the beginning
+      	self.dissociate_wifi(self.wifi1)
+      	self.dissociate_wifi(self.wifi2)
+	if self.wimax_enable:
+		self.wimax_dissociate()
+	self.OutputText.insertPlainText("Dissociated all interfaces. Start Demo Now.\n");
+
+
     def demo_run(self):
 	self.device_init()
-	self.deassociate_devices()
+	self.dissociate_devices()
 	
 	self.OutputText.insertPlainText("Set up Ready.\n");
 	self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
@@ -279,26 +282,29 @@ class OpenRoadClient(QMainWindow,
 	
   	# ap3 -> wimax
   	if self.wimax_enable:
-        	self.exe_os_cmd("./wimax-bicast-up.sh")
+		self.wimax_associate()
 		time.sleep(10)
 	  	self.OutputText.insertPlainText("Finished Wimax association.\n")
 	
 	# wimax -> ap2
-	self.send_bicast_msg();
-	cmd = "iwconfig %s essid xxxx ap off" % (self.wifi1) # Dissociate 
-	self.exe_os_cmd(cmd)
-	self.exe_os_cmd("./short-sleep 5000")
+	self.send_bicast_msg()
+	self.dissociate_wifi(self.wifi1)
+  	time.sleep(self.wifi_association_time/1000000)	
  
 	self.associate_wifi(self.wifi1, self.ap2)
-  	time.sleep(20)
+  	time_s = 20
+	self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
+	time.sleep(time_s)
 
 	self.OutputText.insertPlainText("Switched "+self.wifi1+" from "+self.ap1+" to "+self.ap2+"\n")
-	time.sleep(15)
+  	time_s = 15
+	self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
+	time.sleep(time_s)
 
   	# ap2 -> ap1
 	self.send_bicast_msg();
-  	cmd = "iwconfig %s essid xxxx ap off" % (self.wifi2) # Dissociate 
-  	self.exe_os_cmd("./short-sleep 5000")
+	self.dissociate_wifi(self.wifi2)
+  	time.sleep(self.wifi_association_time/1000000)	
 
 	self.associate_wifi(self.wifi2, self.ap1)
 
