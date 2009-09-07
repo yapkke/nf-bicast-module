@@ -16,7 +16,7 @@
    <widget class="QTabWidget" name="settingTab" >
     <property name="geometry" >
      <rect>
-      <x>50</x>
+      <x>80</x>
       <y>310</y>
       <width>651</width>
       <height>161</height>
@@ -29,7 +29,7 @@
      <enum>QTabWidget::Triangular</enum>
     </property>
     <property name="currentIndex" >
-     <number>4</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="tabAP" >
      <attribute name="title" >
@@ -543,11 +543,17 @@
       <height>101</height>
      </rect>
     </property>
+    <property name="tabChangesFocus" >
+     <bool>true</bool>
+    </property>
     <property name="readOnly" >
      <bool>true</bool>
     </property>
     <property name="plainText" >
      <string/>
+    </property>
+    <property name="centerOnScroll" >
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="Line" name="line_4" >
@@ -695,17 +701,17 @@
      </property>
     </item>
    </widget>
-   <widget class="QPushButton" name="ButtonReset" >
+   <widget class="QPushButton" name="ButtonStop" >
     <property name="geometry" >
      <rect>
-      <x>350</x>
+      <x>430</x>
       <y>130</y>
       <width>80</width>
       <height>28</height>
      </rect>
     </property>
     <property name="text" >
-     <string>RESET</string>
+     <string>Stop</string>
     </property>
    </widget>
    <widget class="QPushButton" name="ButtonSet" >
@@ -718,7 +724,20 @@
      </rect>
     </property>
     <property name="text" >
-     <string>SET</string>
+     <string>Set</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ButtonStart" >
+    <property name="geometry" >
+     <rect>
+      <x>280</x>
+      <y>130</y>
+      <width>80</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Start</string>
     </property>
    </widget>
   </widget>
@@ -764,22 +783,5 @@
   </action>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>cbMode</sender>
-   <signal>currentIndexChanged(QString)</signal>
-   <receiver>cbWifi1</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel" >
-     <x>247</x>
-     <y>119</y>
-    </hint>
-    <hint type="destinationlabel" >
-     <x>390</x>
-     <y>119</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

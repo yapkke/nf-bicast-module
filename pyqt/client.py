@@ -1,5 +1,5 @@
 from PyQt4.QtCore import (QDate, Qt, SIGNAL, pyqtSignature)
-from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton)
+from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton, QMessageBox)
 from subprocess import *
 import openroad_layout
 import sys, os
@@ -10,6 +10,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.setupUi(self)
 				self.cbMode.setFocus()
 				# init: variables
+				self.startNcast = 0;
 				# APs
 				self.ap1 = self.editAP1.text()
 				self.ap2 = self.editAP2.text()
@@ -30,6 +31,12 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				# General Settings
 				self.wifi_association_time = self.wifiAssoTimeSpinBox.value()
 				self.gateway = self.editGW.text()
+
+				#Control Panel, default is auto mode
+				self.cbWifi1.setEnabled(False)
+				self.cbWifi2.setEnabled(False)
+				#The Stop Button by default is disable, enabled with the start button is pushed
+				self.ButtonStop.setEnabled(False)
 				self.updateUi()
 		
 		@pyqtSignature("QString")
@@ -118,27 +125,105 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.OutputText.insertPlainText("Gateway:"+self.gateway+"\n")
 				self.updateUi()
 		
+		@pyqtSignature("QString")
+		def on_cbMode_currentIndexChanged(self, mode):
+				if mode == "Auto":
+						self.device_init()
+						self.cbWifi1.setEnabled(False)
+						self.cbWifi2.setEnabled(False)
+				else:
+						self.device_init()
+						self.cbWifi1.setEnabled(True)						
+						self.cbWifi2.setCurrentIndex(0)
+						self.cbWifi2.setEnabled(True)
+						# The second wifi by default set as none
+						self.cbWifi2.setCurrentIndex(3)
+				self.ButtonStop.setEnabled(False)
+				self.ButtonStart.setEnabled(True)
+			
+		
+		def is_unicast_setting(self):
+				if self.cbWifi1.currentIndex() != 3 and self.cbWifi2.currentIndex() != 3:
+						return False;
+				else:
+						return True
+
+
+		
+		@pyqtSignature("QString")
+		def on_cbWifi1_currentIndexChanged(self, ap):
+				if self.startNcast == 0:
+						if not self.is_unicast_setting():
+								self.cbWifi1.setCurrentIndex(3)
+								QMessageBox.warning(self, "Warning", "Please start from Uni-casting.")								
+				else:
+						# is uni/n-casting
+						if self.wifi_status_1.text()!="N/A":
+								self.send_bicast_msg()
+								self.dissociate.wifi(self.wifi1)
+						self.associate_wifi(self.wifi1, ap);
+
+		@pyqtSignature("QString")
+		def on_cbWifi2_currentIndexChanged(self, ap):
+				if self.startNcast == 0:
+						if not self.is_unicast_setting():
+								self.cbWifi2.setCurrentIndex(3)
+								QMessageBox.warning(self, "Warning", "Please start from Uni-casting.")
+				else:
+						# is uni/n-casting
+						if self.wifi_status_2.text()!="N/A":
+								self.send_bicast_msg()
+								self.dissociate.wifi(self.wifi2)
+						self.associate_wifi(self.wifi2, ap);
+
+
+
 		@pyqtSignature('')
-		def on_ButtonReset_clicked(self):
-				self.OutputText.insertPlainText("ReSet clicked\n")
-				
+		def on_ButtonStop_clicked(self):
+				self.startNcast = 0;
+				self.OutputText.insertPlainText("Stop clicked\n")
+				self.ButtonStop.setEnabled(False)
+				self.ButtonStart.setEnabled(True)
+
+		
+		@pyqtSignature('')
+		def on_ButtonStart_clicked(self):
+				self.startNcast = 1;
+				self.ButtonStop.setEnabled(True)
+				self.ButtonStart.setEnabled(False)
+				self.OutputText.insertPlainText("Start clicked\n")
+				if self.cbMode.currentText() == "Auto":
+						self.OutputText.insertPlainText("Auto Mode\n")
+						if self.wimax_enable:
+								demo_auto_with_wimax()
+						else:
+								demo_auto_without_wimax()
+				else:
+						self.OutputText.insertPlainText("Manual Mode\n")
+						demo_manual();
+
+			
 		@pyqtSignature('')
 		def on_ButtonSet_clicked(self):
-				self.OutputText.insertPlainText("Set clicked\n")
+				self.ap1 = self.editAP1.text()
+				self.ap2 = self.editAP2.text()
+				self.ap3 = self.editAP3.text()
 				#comboBox Wifi1
 				self.cbWifi1.setItemText(0, QApplication.translate("MainWindow", self.ap1, None, QApplication.UnicodeUTF8))
-				self.cbWifi1.setItemText(1, QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))
+				self.cbWifi1.setItemText(1, QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))				
 				self.cbWifi1.setItemText(2, QApplication.translate("MainWindow", self.ap3, None, QApplication.UnicodeUTF8))
+				self.cbWifi1.setItemText(3, QApplication.translate("MainWindow", "N/A", None, QApplication.UnicodeUTF8))
 				#comboBox Wifi2
 				self.cbWifi2.setItemText(0, QApplication.translate("MainWindow", self.ap1, None, QApplication.UnicodeUTF8))
 				self.cbWifi2.setItemText(1, QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))
 				self.cbWifi2.setItemText(2, QApplication.translate("MainWindow", self.ap3, None, QApplication.UnicodeUTF8))
+				self.cbWifi2.setItemText(3, QApplication.translate("MainWindow", "N/A", None, QApplication.UnicodeUTF8))
 				#set Interface#1
 				self.label_control_wifi1.setText(QApplication.translate("MainWindow", self.wifi1, None, QApplication.UnicodeUTF8))
 				self.label_wifi_status_1.setText(QApplication.translate("MainWindow", self.wifi1, None, QApplication.UnicodeUTF8))
 				#set Interface#2
 				self.label_control_wifi2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))
-				self.label_wifi_status_2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))
+				self.label_wifi_status_2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))		
 		
 		#currently a useless function :p
 		def updateUi(self):
@@ -187,7 +272,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				## input
 				pass
 		
-		def send_bicast_msg(self, hostmac=int("0x001cf0ee5ad1", 16), noxhost="192.168.2.254", noxport=2603):
+		def send_bicast_msg(self, hostmac=int("0x001cf0ed985a", 16), noxhost="10.79.1.105", noxport=2603):
 				#hostmac = int("0x001cf0ee5ad1", 16);
 				#noxhost = "192.168.2.254"
 				#nox messenger port = 2603
@@ -199,6 +284,38 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.OutputText.insertPlainText("Bicast Host : "+str(hostmac))
 				self.OutputText.insertPlainText("NOX Host : "+noxhost)
 				self.OutputText.insertPlainText("NOX Port : "+str(noxport) + "\n")
+		
+			
+		def associate_wifi(self, wifiIF, ap):
+				# Initialize association and active slave
+				#cmd = "iwconfig %s essid %s" % (wifiIF, ap)
+				self.exe_os_cmd(self.wifi_associate_cmd(wifiIF, ap))
+				time.sleep(self.wifi_association_time/1000000)	
+				
+				#cmd = "./change-active-slave %s %s" % (self.bond_name, wifiIF)
+				self.change_active_slave(self.bond_name, wifiIF)
+				if wifiIF == self.wifi1:
+						self.wifi_status_1.setText(ap)
+				elif wifiIF == self.wifi2:
+						self.wifi_status_2.setText(ap)
+				
+				self.OutputText.insertPlainText(wifiIF + " is asscociated with " +ap +"\n")
+				
+		def dissociate_wifi(self, wifiIF):
+				self.exe_os_cmd(self.wifi_dissociate_cmd(wifiIF))
+				if wifiIF == self.wifi1:
+						self.wifi_status_1.setText("N/A")
+				elif wifiIF == self.wifi2:
+						self.wifi_status_2.setText("N/A")
+				self.OutputText.insertPlainText(wifiIF + " is disscociated from AP\n")
+		
+		def dissociate_devices(self):
+				# Dissociate everything in the beginning
+				self.dissociate_wifi(self.wifi1)
+				self.dissociate_wifi(self.wifi2)
+				if self.wimax_enable:
+						self.wimax_dissociate()
+				self.OutputText.insertPlainText("Dissociated all interfaces. We may start now.\n");
 		
 		def device_init(self):
 				#cmd = "ifconfig %s down" % (self.wifi1)
@@ -232,41 +349,14 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				cmd = "route add default gw %s" % (self.gateway)
 				self.exe_os_cmd(cmd)
 				self.OutputText.insertPlainText("Devices Initialized.\n");
-				
-		def associate_wifi(self, wifiIF, ap):
-				# Initialize association and active slave
-				#cmd = "iwconfig %s essid %s" % (wifiIF, ap)
-				self.exe_os_cmd(self.wifi_associate_cmd(wifiIF, ap))
-				time.sleep(self.wifi_association_time/1000000)	
-				
-				#cmd = "./change-active-slave %s %s" % (self.bond_name, wifiIF)
-				self.change_active_slave(self.bond_name, wifiIF)
-				if wifiIF == self.wifi1:
-						self.wifi_status_1.setText(ap)
-				elif wifiIF == self.wifi2:
-						self.wifi_status_2.setText(ap)
-				
-				self.OutputText.insertPlainText(wifiIF + " is asscociated with " +ap +"\n")
-				
-		def dissociate_wifi(self, wifiIF):
-				self.exe_os_cmd(self.wifi_dissociate_cmd(wifiIF))
-				if wifiIF == self.wifi1:
-						self.wifi_status_1.setText("N/A")
-				elif wifiIF == self.wifi2:
-						self.wifi_status_2.setText("N/A")
-				self.OutputText.insertPlainText(wifiIF + " is disscociated from AP\n")
-		
-		def dissociate_devices(self):
-				# Dissociate everything in the beginning
-				self.dissociate_wifi(self.wifi1)
-				self.dissociate_wifi(self.wifi2)
-				if self.wimax_enable:
-						self.wimax_dissociate()
-				self.OutputText.insertPlainText("Dissociated all interfaces. We may start now.\n");
-		
+				self.dissociate_devices()
+	
+		def demo_manual(self):
+				self.device_init()
+
+
 		def demo_auto_with_wimax(self):
 				self.device_init()
-				self.dissociate_devices()
 				self.OutputText.insertPlainText("Set up Ready.\n");
 				self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
 				self.OutputText.insertPlainText("Bonding IP address: " + self.bonding_ip_address+"\n")
