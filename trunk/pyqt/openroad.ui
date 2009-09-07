@@ -1,43 +1,42 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
+<ui version="4.0" >
  <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
+ <widget class="QMainWindow" name="MainWindow" >
+  <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>719</height>
    </rect>
   </property>
-  <property name="windowTitle">
+  <property name="windowTitle" >
    <string>OpenRoad Tricast Demo</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="QTabWidget" name="settingTab">
-    <property name="geometry">
+  <widget class="QWidget" name="centralwidget" >
+   <widget class="QTabWidget" name="settingTab" >
+    <property name="geometry" >
      <rect>
       <x>70</x>
-      <y>40</y>
+      <y>310</y>
       <width>651</width>
       <height>161</height>
      </rect>
     </property>
-    <property name="tabPosition">
+    <property name="tabPosition" >
      <enum>QTabWidget::North</enum>
     </property>
-    <property name="tabShape">
+    <property name="tabShape" >
      <enum>QTabWidget::Triangular</enum>
     </property>
-    <property name="currentIndex">
+    <property name="currentIndex" >
      <number>4</number>
     </property>
-    <widget class="QWidget" name="tabAP">
-     <attribute name="title">
+    <widget class="QWidget" name="tabAP" >
+     <attribute name="title" >
       <string>AP</string>
      </attribute>
-     <widget class="QLineEdit" name="editAP1">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editAP1" >
+      <property name="geometry" >
        <rect>
         <x>300</x>
         <y>20</y>
@@ -45,12 +44,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>cleanslatewifi1</string>
+      <property name="text" >
+       <string>ordemo1</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_ap1">
-      <property name="geometry">
+     <widget class="QLabel" name="label_ap1" >
+      <property name="geometry" >
        <rect>
         <x>260</x>
         <y>23</y>
@@ -58,12 +57,12 @@
         <height>17</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>AP1</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_ap2">
-      <property name="geometry">
+     <widget class="QLabel" name="label_ap2" >
+      <property name="geometry" >
        <rect>
         <x>260</x>
         <y>52</y>
@@ -71,12 +70,12 @@
         <height>17</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>AP2</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editAP2">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editAP2" >
+      <property name="geometry" >
        <rect>
         <x>300</x>
         <y>50</y>
@@ -84,12 +83,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>cleanslatewifi4</string>
+      <property name="text" >
+       <string>ordemo2</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_ap3">
-      <property name="geometry">
+     <widget class="QLabel" name="label_ap3" >
+      <property name="geometry" >
        <rect>
         <x>260</x>
         <y>80</y>
@@ -97,12 +96,12 @@
         <height>17</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>AP3</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editAP3">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editAP3" >
+      <property name="geometry" >
        <rect>
         <x>300</x>
         <y>79</y>
@@ -110,17 +109,17 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>cleanslatewifi3</string>
+      <property name="text" >
+       <string>ordemo3</string>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabWiFi">
-     <attribute name="title">
+    <widget class="QWidget" name="tabWiFi" >
+     <attribute name="title" >
       <string>WiFi Interface</string>
      </attribute>
-     <widget class="QLabel" name="label_wifi_if_1">
-      <property name="geometry">
+     <widget class="QLabel" name="label_wifi_if_1" >
+      <property name="geometry" >
        <rect>
         <x>179</x>
         <y>20</y>
@@ -128,12 +127,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>First InterFace Name</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editWiFiIF1">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editWiFiIF1" >
+      <property name="geometry" >
        <rect>
         <x>320</x>
         <y>20</y>
@@ -141,12 +140,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>ath1</string>
+      <property name="text" >
+       <string>wlan0</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editWiFiIF2">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editWiFiIF2" >
+      <property name="geometry" >
        <rect>
         <x>321</x>
         <y>50</y>
@@ -154,12 +153,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>wlan0</string>
+      <property name="text" >
+       <string>ath0</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_wifi_if_2">
-      <property name="geometry">
+     <widget class="QLabel" name="label_wifi_if_2" >
+      <property name="geometry" >
        <rect>
         <x>162</x>
         <y>50</y>
@@ -167,17 +166,17 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>Second InterFace Name</string>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabBond">
-     <attribute name="title">
+    <widget class="QWidget" name="tabBond" >
+     <attribute name="title" >
       <string>Bonding Driver</string>
      </attribute>
-     <widget class="QLabel" name="label_bond_ip">
-      <property name="geometry">
+     <widget class="QLabel" name="label_bond_ip" >
+      <property name="geometry" >
        <rect>
         <x>150</x>
         <y>10</y>
@@ -185,12 +184,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>IP Address with WiMAX</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editBondIP">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editBondIP" >
+      <property name="geometry" >
        <rect>
         <x>310</x>
         <y>10</y>
@@ -198,12 +197,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>192.168.2.226</string>
+      <property name="text" >
+       <string>10.79.1.242</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_bond_mac">
-      <property name="geometry">
+     <widget class="QLabel" name="label_bond_mac" >
+      <property name="geometry" >
        <rect>
         <x>212</x>
         <y>70</y>
@@ -211,12 +210,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>MAC Address </string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editBondMac">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editBondMac" >
+      <property name="geometry" >
        <rect>
         <x>310</x>
         <y>70</y>
@@ -224,12 +223,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>00:1c:f0:ee:5a:d1</string>
+      <property name="text" >
+       <string>00:1c:f0:ed:98:5a</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_bond_if">
-      <property name="geometry">
+     <widget class="QLabel" name="label_bond_if" >
+      <property name="geometry" >
        <rect>
         <x>199</x>
         <y>100</y>
@@ -237,12 +236,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>InterFace Name</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editBondMacIF">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editBondMacIF" >
+      <property name="geometry" >
        <rect>
         <x>310</x>
         <y>100</y>
@@ -250,12 +249,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>bond0</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_bond_ip_nowimax">
-      <property name="geometry">
+     <widget class="QLabel" name="label_bond_ip_nowimax" >
+      <property name="geometry" >
        <rect>
         <x>153</x>
         <y>40</y>
@@ -263,12 +262,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>IP Address w/o WiMAX</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editBondIP_nowimax">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editBondIP_nowimax" >
+      <property name="geometry" >
        <rect>
         <x>311</x>
         <y>39</y>
@@ -276,17 +275,17 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>192.168.2.140</string>
+      <property name="text" >
+       <string>10.79.1.242</string>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabWimax">
-     <attribute name="title">
+    <widget class="QWidget" name="tabWimax" >
+     <attribute name="title" >
       <string>WiMAX</string>
      </attribute>
-     <widget class="QLabel" name="label_wimax_if">
-      <property name="geometry">
+     <widget class="QLabel" name="label_wimax_if" >
+      <property name="geometry" >
        <rect>
         <x>150</x>
         <y>22</y>
@@ -294,12 +293,12 @@
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>WiMAX Interface Name</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editWimaxIF">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editWimaxIF" >
+      <property name="geometry" >
        <rect>
         <x>310</x>
         <y>20</y>
@@ -307,12 +306,12 @@
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>eth1</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="isUseWiMax">
-      <property name="geometry">
+     <widget class="QCheckBox" name="isUseWiMax" >
+      <property name="geometry" >
        <rect>
         <x>290</x>
         <y>60</y>
@@ -320,291 +319,467 @@
         <height>21</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>Use WiMAX</string>
       </property>
-      <property name="checked">
+      <property name="checked" >
        <bool>true</bool>
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tabGeneral">
-     <attribute name="title">
+    <widget class="QWidget" name="tabGeneral" >
+     <attribute name="title" >
       <string>General</string>
      </attribute>
-     <widget class="QSpinBox" name="wifiAssoTimeSpinBox">
-      <property name="geometry">
+     <widget class="QSpinBox" name="wifiAssoTimeSpinBox" >
+      <property name="geometry" >
        <rect>
         <x>320</x>
-        <y>20</y>
+        <y>80</y>
         <width>91</width>
         <height>21</height>
        </rect>
       </property>
-      <property name="maximum">
+      <property name="maximum" >
        <number>100000</number>
       </property>
-      <property name="singleStep">
+      <property name="singleStep" >
        <number>1000</number>
       </property>
-      <property name="value">
+      <property name="value" >
        <number>50000</number>
       </property>
      </widget>
-     <widget class="QLabel" name="label_WifiAssocTime">
-      <property name="geometry">
+     <widget class="QLabel" name="label_WifiAssocTime" >
+      <property name="geometry" >
        <rect>
         <x>76</x>
-        <y>21</y>
+        <y>81</y>
         <width>241</width>
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>WiFi Association Time (micro second)</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_gw">
-      <property name="geometry">
+     <widget class="QLabel" name="label_gw" >
+      <property name="geometry" >
        <rect>
         <x>253</x>
-        <y>50</y>
+        <y>110</y>
         <width>61</width>
         <height>20</height>
        </rect>
       </property>
-      <property name="text">
+      <property name="text" >
        <string>Gateway </string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="editGW">
-      <property name="geometry">
+     <widget class="QLineEdit" name="editGW" >
+      <property name="geometry" >
        <rect>
         <x>320</x>
-        <y>50</y>
+        <y>110</y>
         <width>121</width>
         <height>22</height>
        </rect>
       </property>
-      <property name="text">
-       <string>192.168.2.254</string>
+      <property name="text" >
+       <string>10.79.1.105</string>
       </property>
      </widget>
     </widget>
    </widget>
-   <widget class="Line" name="line_2">
-    <property name="geometry">
+   <widget class="Line" name="line_2" >
+    <property name="geometry" >
      <rect>
       <x>40</x>
-      <y>340</y>
+      <y>510</y>
       <width>691</width>
       <height>20</height>
      </rect>
     </property>
-    <property name="orientation">
+    <property name="orientation" >
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QPushButton" name="ButtonRun">
-    <property name="geometry">
+   <widget class="QLabel" name="label_output" >
+    <property name="geometry" >
      <rect>
       <x>360</x>
-      <y>210</y>
-      <width>113</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Run</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_output">
-    <property name="geometry">
-     <rect>
-      <x>360</x>
-      <y>360</y>
+      <y>520</y>
       <width>111</width>
-      <height>20</height>
+      <height>30</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>Output Message</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_settings">
-    <property name="geometry">
+   <widget class="QLabel" name="label_settings" >
+    <property name="geometry" >
      <rect>
       <x>380</x>
-      <y>10</y>
+      <y>280</y>
       <width>111</width>
-      <height>20</height>
+      <height>30</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>Settings</string>
     </property>
    </widget>
-   <widget class="Line" name="line_3">
-    <property name="geometry">
+   <widget class="Line" name="line_3" >
+    <property name="geometry" >
      <rect>
       <x>40</x>
-      <y>240</y>
+      <y>169</y>
       <width>691</width>
       <height>20</height>
      </rect>
     </property>
-    <property name="orientation">
+    <property name="orientation" >
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QLabel" name="label_status">
-    <property name="geometry">
+   <widget class="QLabel" name="label_status" >
+    <property name="geometry" >
      <rect>
       <x>350</x>
-      <y>252</y>
+      <y>181</y>
       <width>141</width>
       <height>20</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>Association Status</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_wifi_status_1">
-    <property name="geometry">
+   <widget class="QLabel" name="label_wifi_status_1" >
+    <property name="geometry" >
      <rect>
       <x>310</x>
-      <y>280</y>
+      <y>209</y>
       <width>61</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>WiFi #1</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_wifi_status_2">
-    <property name="geometry">
+   <widget class="QLabel" name="label_wifi_status_2" >
+    <property name="geometry" >
      <rect>
       <x>310</x>
-      <y>300</y>
+      <y>229</y>
       <width>61</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>WiFi #2</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_wimax_status">
-    <property name="geometry">
+   <widget class="QLabel" name="label_wimax_status" >
+    <property name="geometry" >
      <rect>
       <x>310</x>
-      <y>320</y>
+      <y>249</y>
       <width>61</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>WiMax</string>
     </property>
    </widget>
-   <widget class="QLabel" name="wifi_status_1">
-    <property name="geometry">
+   <widget class="QLabel" name="wifi_status_1" >
+    <property name="geometry" >
      <rect>
       <x>390</x>
-      <y>280</y>
+      <y>209</y>
       <width>111</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>N/A</string>
     </property>
    </widget>
-   <widget class="QLabel" name="wifi_status_2">
-    <property name="geometry">
+   <widget class="QLabel" name="wifi_status_2" >
+    <property name="geometry" >
      <rect>
       <x>390</x>
-      <y>300</y>
+      <y>229</y>
       <width>121</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>N/A</string>
     </property>
    </widget>
-   <widget class="QLabel" name="wimax_status">
-    <property name="geometry">
+   <widget class="QLabel" name="wimax_status" >
+    <property name="geometry" >
      <rect>
       <x>390</x>
-      <y>321</y>
+      <y>250</y>
       <width>131</width>
       <height>17</height>
      </rect>
     </property>
-    <property name="text">
+    <property name="text" >
      <string>N/A</string>
     </property>
    </widget>
-   <widget class="QPlainTextEdit" name="OutputText">
-    <property name="geometry">
+   <widget class="QPlainTextEdit" name="OutputText" >
+    <property name="geometry" >
      <rect>
-      <x>72</x>
-      <y>381</y>
+      <x>80</x>
+      <y>550</y>
       <width>651</width>
-      <height>201</height>
+      <height>101</height>
      </rect>
     </property>
-    <property name="readOnly">
+    <property name="readOnly" >
      <bool>true</bool>
     </property>
-    <property name="plainText">
+    <property name="plainText" >
      <string/>
     </property>
    </widget>
+   <widget class="Line" name="line_4" >
+    <property name="geometry" >
+     <rect>
+      <x>40</x>
+      <y>270</y>
+      <width>691</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="orientation" >
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cbMode" >
+    <property name="geometry" >
+     <rect>
+      <x>210</x>
+      <y>80</y>
+      <width>75</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text" >
+      <string>Auto</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>Manual</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_control" >
+    <property name="geometry" >
+     <rect>
+      <x>350</x>
+      <y>10</y>
+      <width>141</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Control Panel</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_control_2" >
+    <property name="geometry" >
+     <rect>
+      <x>230</x>
+      <y>50</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Mode</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_control_wifi1" >
+    <property name="geometry" >
+     <rect>
+      <x>360</x>
+      <y>50</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>WiF i  #1</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cbWifi1" >
+    <property name="geometry" >
+     <rect>
+      <x>350</x>
+      <y>80</y>
+      <width>81</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text" >
+      <string>ordemo1</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>ordemo2</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>ordemo3</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>N/A</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QLabel" name="label_control_wifi2" >
+    <property name="geometry" >
+     <rect>
+      <x>510</x>
+      <y>50</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>WiF i  #2</string>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="cbWifi2" >
+    <property name="geometry" >
+     <rect>
+      <x>500</x>
+      <y>80</y>
+      <width>81</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <item>
+     <property name="text" >
+      <string>ordemo1</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>ordemo2</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>ordemo3</string>
+     </property>
+    </item>
+    <item>
+     <property name="text" >
+      <string>N/A</string>
+     </property>
+    </item>
+   </widget>
+   <widget class="QPushButton" name="ButtonReset" >
+    <property name="geometry" >
+     <rect>
+      <x>350</x>
+      <y>130</y>
+      <width>80</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>RESET</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="ButtonSet" >
+    <property name="geometry" >
+     <rect>
+      <x>350</x>
+      <y>480</y>
+      <width>80</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>SET</string>
+    </property>
+   </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
+  <widget class="QStatusBar" name="statusbar" />
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
     <rect>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuSettings">
-    <property name="title">
+   <widget class="QMenu" name="menuSettings" >
+    <property name="title" >
      <string>Settings</string>
     </property>
-    <addaction name="actionAP_Settings"/>
-    <addaction name="actionWiFi_Interfaces"/>
+    <addaction name="actionAP_Settings" />
+    <addaction name="actionWiFi_Interfaces" />
+    <addaction name="separator" />
    </widget>
-   <addaction name="menuSettings"/>
+   <addaction name="menuSettings" />
   </widget>
-  <action name="actionAP_Settings">
-   <property name="text">
+  <action name="actionAP_Settings" >
+   <property name="text" >
     <string>Show Debug Message</string>
    </property>
   </action>
-  <action name="actionWiFi_Interfaces">
-   <property name="text">
-    <string>Show Status</string>
+  <action name="actionWiFi_Interfaces" >
+   <property name="text" >
+    <string>Show Setting</string>
    </property>
   </action>
-  <action name="actionBonding_Drivers">
-   <property name="text">
+  <action name="actionBonding_Drivers" >
+   <property name="text" >
     <string>Bonding Driver</string>
    </property>
   </action>
-  <action name="actionWiMAX">
-   <property name="text">
+  <action name="actionWiMAX" >
+   <property name="text" >
     <string>WiMAX</string>
    </property>
   </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>cbMode</sender>
+   <signal>currentIndexChanged(QString)</signal>
+   <receiver>cbWifi1</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>247</x>
+     <y>119</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>390</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
