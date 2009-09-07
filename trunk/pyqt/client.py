@@ -324,9 +324,12 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 		def dissociate_wifi(self, wifiIF):
 				self.exe_os_cmd(self.wifi_dissociate_cmd(wifiIF))
 				if wifiIF == self.wifi1:
-						self.wifi_status_1.setText("N/A")
+						self.wifi_status_1.setText("N/A")						
 				elif wifiIF == self.wifi2:
 						self.wifi_status_2.setText("N/A")
+
+				if self.activeIF == wifiIF:
+						self.activeIF = "N/A"
 				self.OutputText.insertPlainText(wifiIF + " is disscociated from AP\n")
 		
 		def dissociate_devices(self):
@@ -391,6 +394,55 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 		def sleep_between_handover(self, time_s):
 				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
 				time.sleep(time_s)
+		
+		
+		def demo_auto_without_wimax(self):
+				self.device_init()
+				self.OutputText.insertPlainText("Set up Ready.\n");
+				self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
+				self.OutputText.insertPlainText("Bonding IP address: " + self.bonding_ip_address+"\n")
+				self.OutputText.insertPlainText("Starting Demo .....\n");
+				
+				# Sequence
+				# (ap1, N/A) -> (ap1, ap2) -> (ap3, ap2) -> (ap1, ap2) -> (ap1, N/A)
+
+				# wifi1: ap1, wifi2:N/A
+				self.associate_wifi(self.wifi1, self.ap1)	
+				self.change_active_slave(self.bond_name, self.wifi1)
+
+				self.sleep_between_handover(30)
+				
+				# wifi1: ap1, wifi2:ap2
+				# ap1 -> ap3 (start bicast)
+				self.associate_wifi(self.wifi2, self.ap2)
+				self.change_active_slave(self.bond_name, self.wifi2)
+				self.sleep_between_handover(30)
+				
+				# wifi1: ap3, wifi2:ap2
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi1)
+				
+				self.associate_wifi(self.wifi1, self.ap3)
+				self.sleep_between_handover(30)
+				
+				# wifi1: ap1, wifi2:ap2
+				self.send_bicast_msg();
+				self.dissociate_wifi(self.wifi1)
+				
+				self.associate_wifi(self.wifi1, self.ap1)
+				self.sleep_between_handover(30)
+
+				#wifi1: ap1, wifi2:N/A
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi2)
+				self.change_active_slave(self.bond_name, self.wifi1)
+
+				self.sleep_between_handover(30)
+				# Goto step two and repeat
+
+				self.OutputText.insertPlainText("Switched "+self.wifi2+" from "+self.ap3+" to "+self.ap1+"\n")
+				self.sleep_between_handover(60)
+				self.OutputText.insertPlainText("Demo End!\n")
 
 
 		def demo_auto_with_wimax(self):
