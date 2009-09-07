@@ -1,5 +1,5 @@
 from PyQt4.QtCore import (QDate, Qt, SIGNAL, pyqtSignature)
-from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow)
+from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton)
 from subprocess import *
 import openroad_layout
 import sys, os
@@ -10,7 +10,7 @@ class OpenRoadClient(QMainWindow,
     def __init__(self, parent=None):
         super(OpenRoadClient, self).__init__(parent)
         self.setupUi(self)
-        self.ButtonRun.setFocus()
+        self.cbMode.setFocus()
         # init: variables
         # APs
         self.ap1 = self.editAP1.text()
@@ -42,9 +42,9 @@ class OpenRoadClient(QMainWindow,
     
     @pyqtSignature("QString")
     def on_editBondMac_textEdited(self, text):
-        self.bonding_mac_address = text;
-        self.OutputText.insertPlainText("Bonding MAC Address:"+self.bonding_mac_address+"\n")
-        self.updateUi()
+		self.bonding_mac_address = text;
+		self.OutputText.insertPlainText("Bonding MAC Address:"+self.bonding_mac_address+"\n")
+		self.updateUi()
     
     @pyqtSignature("QString")
     def on_editBondIP_textEdited(self, text):
@@ -64,9 +64,9 @@ class OpenRoadClient(QMainWindow,
 
     @pyqtSignature("QString")
     def on_editAP1_textEdited(self, text):
-        self.ap1 = text
-        self.OutputText.insertPlainText("AP1:"+self.ap1+"\n")
-        self.updateUi()
+		self.ap1 = text
+		self.OutputText.insertPlainText("AP1:"+self.ap1+"\n")
+		self.updateUi()
 
     @pyqtSignature("QString")
     def on_editAP2_textEdited(self, text):
@@ -120,10 +120,29 @@ class OpenRoadClient(QMainWindow,
         self.OutputText.insertPlainText("Gateway:"+self.gateway+"\n")
         self.updateUi()
     
-    @pyqtSignature('')
-    def on_ButtonRun_clicked(self):
-        self.demo_run()
-        
+	@pyqtSignature('')
+	def on_ButtonReset_clicked(self):
+		self.OutputText.insertPlainText("ReSet clicked\n")
+
+	@pyqtSignature('')
+	def on_ButtonSet_clicked(self):
+		self.OutputText.insertPlainText("Set clicked\n")
+		#comboBox Wifi1
+ 		self.cbWifi1.setItemText(0, QApplication.translate("MainWindow", self.ap1, None, QApplication.UnicodeUTF8))
+ 		self.cbWifi1.setItemText(1, QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))
+ 		self.cbWifi1.setItemText(2, QApplication.translate("MainWindow", self.ap3, None, QApplication.UnicodeUTF8))
+        #comboBox Wifi2
+ 		self.cbWifi2.setItemText(0, QApplication.translate("MainWindow", self.ap1, None, QApplication.UnicodeUTF8))
+ 		self.cbWifi2.setItemText(1, QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))
+ 		self.cbWifi2.setItemText(2, QApplication.translate("MainWindow", self.ap3, None, QApplication.UnicodeUTF8))
+		#set Interface#1
+		self.label_control_wifi1.setText(QApplication.translate("MainWindow", self.wifi1, None, QApplication.UnicodeUTF8))
+		self.label_wifi_status_1.setText(QApplication.translate("MainWindow", self.wifi1, None, QApplication.UnicodeUTF8))
+		#set Interface#2
+		self.label_control_wifi2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))
+		self.label_wifi_status_2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))
+
+ 
     #currently a useless function :p
     def updateUi(self):
         a=1
@@ -250,7 +269,10 @@ class OpenRoadClient(QMainWindow,
 	self.OutputText.insertPlainText("Dissociated all interfaces. Start Demo Now.\n");
 
 
-    def demo_run(self):
+    
+
+
+    def demo_auto_with_wimax(self):
 	self.device_init()
 	self.dissociate_devices()
 	
