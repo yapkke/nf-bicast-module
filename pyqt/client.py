@@ -1,3 +1,5 @@
+#!/usr/bin/python
+#Todo: Auto mode / flush state
 from PyQt4.QtCore import (QDate, Qt, SIGNAL, pyqtSignature)
 from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton, QMessageBox)
 from subprocess import *
@@ -35,6 +37,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				#Control Panel, default is auto mode
 				self.cbWifi1.setEnabled(False)
 				self.cbWifi2.setEnabled(False)
+				#Active Wireless Interface 
+				self.activeIF = "N/A"
 				#The Stop Button by default is disable, enabled with the start button is pushed
 				self.ButtonStop.setEnabled(False)
 				self.updateUi()
@@ -156,12 +160,18 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 						if not self.is_unicast_setting():
 								self.cbWifi1.setCurrentIndex(3)
 								QMessageBox.warning(self, "Warning", "Please start from Uni-casting.")								
+				elif ap == self.wifi_status_2.text():
+						self.cbWifi1.setCurrentIndex(3)
+						QMessageBox.warning(self, "Warning", "This AP is already associated with the other WiFi interface.")
 				else:
 						# is uni/n-casting
 						if self.wifi_status_1.text()!="N/A":
+								#leaving an AP, send message
 								self.send_bicast_msg()
 								self.dissociate.wifi(self.wifi1)
 						self.associate_wifi(self.wifi1, ap);
+						if self.activeIF == "N/A" or self.wifi_status_2.text()=="N/A":
+								self.change_active_slave(self.bond_name, self.wifi1)
 
 		@pyqtSignature("QString")
 		def on_cbWifi2_currentIndexChanged(self, ap):
@@ -169,12 +179,17 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 						if not self.is_unicast_setting():
 								self.cbWifi2.setCurrentIndex(3)
 								QMessageBox.warning(self, "Warning", "Please start from Uni-casting.")
+				elif ap == self.wifi_status_1.text():
+						self.cbWifi2.setCurrentIndex(3)
+						QMessageBox.warning(self, "Warning", "This AP is already associated with the other WiFi interface.")
 				else:
 						# is uni/n-casting
 						if self.wifi_status_2.text()!="N/A":
 								self.send_bicast_msg()
 								self.dissociate.wifi(self.wifi2)
 						self.associate_wifi(self.wifi2, ap);
+						if self.activeIF == "N/A" or self.wifi_status_2.text()=="N/A":
+								self.change_active_slave(self.bond_name, self.wifi2)
 
 
 
@@ -266,17 +281,24 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 		def change_active_slave(self, new_active_slave):
 				cmd = "./change-active-slave %s %s" % (self.bond_name, new_active_slave) 
 				self.exe_os_cmd(cmd)
+				self.activeIF = wifiIF
 		
 		def signal_quit_to_nox(self):
 				## TODO: Modify bicast_noxmsg.py so that it's parameterized with GUI's
 				## input
 				pass
 		
+		def flush_bicast_state(self):
+				self.send_bicast_msg();
+				self.send_bicast_msg();
+				if self.wimax_enable:
+						self.send_bicast_msg();
+
+
 		def send_bicast_msg(self, hostmac=int("0x001cf0ed985a", 16), noxhost="10.79.1.105", noxport=2603):
-				#hostmac = int("0x001cf0ee5ad1", 16);
-				#noxhost = "192.168.2.254"
-				#nox messenger port = 2603
-				#noxport = 6633
+				# Change "00:1c:f0:ed:98:5a" to "0x001cf0ed985a", then change to integer in Hex
+				hostmac = int("0x"+self.bonding_mac_address.replace(":",""), 16)
+				noxhost = self.gateway
 				sock = noxmsg.NOXChannel(noxhost, noxport);
 				noxmsgtype = int("0x12",16);
 				sock.send(noxmsgtype, struct.pack("Q",noxmsg.htonll(hostmac)));
@@ -292,8 +314,6 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.exe_os_cmd(self.wifi_associate_cmd(wifiIF, ap))
 				time.sleep(self.wifi_association_time/1000000)	
 				
-				#cmd = "./change-active-slave %s %s" % (self.bond_name, wifiIF)
-				self.change_active_slave(self.bond_name, wifiIF)
 				if wifiIF == self.wifi1:
 						self.wifi_status_1.setText(ap)
 				elif wifiIF == self.wifi2:
@@ -349,10 +369,28 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				cmd = "route add default gw %s" % (self.gateway)
 				self.exe_os_cmd(cmd)
 				self.OutputText.insertPlainText("Devices Initialized.\n");
+				# In order to clean nox states by sending out bicast msgs, 
+				# we associate wifi1 to ap1, then dissociate everything
+				self.associate_wifi(self.wifi1, self.ap1)
+				self.change_active_slave(self.bond_name, self.wifi1)
+				self.flush_bicast_state()
 				self.dissociate_devices()
+		
 	
 		def demo_manual(self):
 				self.device_init()
+				if self.cbWifi1.currentIndex()!=3:
+						#Start from wifi1
+						self.associate_wifi(self.wifi1, self.cbWifi1.currentText())
+						self.change_active_slave(self.bond_name, self.wifi1)
+				elif self.cbwifi2.currentIndex()!=3:
+						#Start from wifi2
+						self.associate_wifi(self.wifi2, self.cbWifi2.currentText())
+						self.change_active_slave(self.bond_name, self.wifi2)
+				
+		def sleep_between_handover(self, time_s):
+				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
+				time.sleep(time_s)
 
 
 		def demo_auto_with_wimax(self):
@@ -365,52 +403,34 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				# Sequence
 				# ap1 -> ap3 -> wimax -> ap2 -> ap1
 				self.associate_wifi(self.wifi1, self.ap1)	
-				self.send_bicast_msg(); 
-				self.send_bicast_msg(); 
-				self.send_bicast_msg();
-				time_s = 30
-				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
-				time.sleep(time_s)
+				self.change_active_slave(self.bond_name, self.wifi1)
+
+				self.sleep_between_handover(30)
 				
 				# ap1 -> ap3 (start bicast)
 				self.associate_wifi(self.wifi2, self.ap3)
-				if self.wimax_enable:
-						time_s = 20
-				else:
-						time_s = 30
-						
-				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
-				time.sleep(time_s)
+				self.sleep_between_handover(30)
 				
-				# ap3 -> wimax
+				# ap3 -> wimax(tricast)
 				if self.wimax_enable:
 						self.wimax_associate()
 						time.sleep(10)
 						self.OutputText.insertPlainText("Finished Wimax association.\n")
 				
-				# wimax -> ap2
+				# wimax -> ap2 (back to bicast)
 				self.send_bicast_msg()
 				self.dissociate_wifi(self.wifi1)
-				time.sleep(self.wifi_association_time/1000000)	
 				
 				self.associate_wifi(self.wifi1, self.ap2)
-				time_s = 20
-				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
-				time.sleep(time_s)
-				
-				self.OutputText.insertPlainText("Switched "+self.wifi1+" from "+self.ap1+" to "+self.ap2+"\n")
-				time_s = 15
-				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
-				time.sleep(time_s)
+				self.sleep_between_handover(30)
 				
 				# ap2 -> ap1
 				self.send_bicast_msg();
 				self.dissociate_wifi(self.wifi2)
-				time.sleep(self.wifi_association_time/1000000)	
 				
 				self.associate_wifi(self.wifi2, self.ap1)
 				self.OutputText.insertPlainText("Switched "+self.wifi2+" from "+self.ap3+" to "+self.ap1+"\n")
-				time.sleep(60)
+				self.sleep_between_handover(60)
 				self.OutputText.insertPlainText("Demo End!\n")
 
 
