@@ -5,11 +5,11 @@ import socket
 import struct
 
 # Old D-link card
-#hostmac = int("0x001cf0ed985a", 16);
+hostmac = int("0x001cf0ed985a", 16);
 # New D-link card
 #hostmac = int("0x0050c274d10a", 16);
-hostmac = int("0x001cf0ee5ad1", 16);
-noxhost = "192.168.2.254"
+#hostmac = int("0x001cf0ee5ad1", 16);
+noxhost = "10.79.1.105"
 noxport = 2603
 #noxport = 6633
 sock = noxmsg.NOXChannel(noxhost, noxport);

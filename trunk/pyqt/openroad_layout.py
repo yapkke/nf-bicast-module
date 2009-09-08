@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './openroad.ui'
 #
-# Created: Sun Sep  6 21:13:33 2009
+# Created: Mon Sep  7 19:21:14 2009
 #      by: PyQt4 UI code generator 4.4.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -197,11 +197,14 @@ class Ui_MainWindow(object):
         self.ButtonStop.setGeometry(QtCore.QRect(430, 130, 80, 28))
         self.ButtonStop.setObjectName("ButtonStop")
         self.ButtonSet = QtGui.QPushButton(self.centralwidget)
-        self.ButtonSet.setGeometry(QtCore.QRect(350, 480, 80, 28))
+        self.ButtonSet.setGeometry(QtCore.QRect(280, 480, 80, 28))
         self.ButtonSet.setObjectName("ButtonSet")
         self.ButtonStart = QtGui.QPushButton(self.centralwidget)
         self.ButtonStart.setGeometry(QtCore.QRect(280, 130, 80, 28))
         self.ButtonStart.setObjectName("ButtonStart")
+        self.ButtonFlush = QtGui.QPushButton(self.centralwidget)
+        self.ButtonFlush.setGeometry(QtCore.QRect(420, 480, 81, 28))
+        self.ButtonFlush.setObjectName("ButtonFlush")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -286,6 +289,7 @@ class Ui_MainWindow(object):
         self.ButtonStop.setText(QtGui.QApplication.translate("MainWindow", "Stop", None, QtGui.QApplication.UnicodeUTF8))
         self.ButtonSet.setText(QtGui.QApplication.translate("MainWindow", "Set", None, QtGui.QApplication.UnicodeUTF8))
         self.ButtonStart.setText(QtGui.QApplication.translate("MainWindow", "Start", None, QtGui.QApplication.UnicodeUTF8))
+        self.ButtonFlush.setText(QtGui.QApplication.translate("MainWindow", "Flush NoX", None, QtGui.QApplication.UnicodeUTF8))
         self.menuSettings.setTitle(QtGui.QApplication.translate("MainWindow", "Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAP_Settings.setText(QtGui.QApplication.translate("MainWindow", "Show Debug Message", None, QtGui.QApplication.UnicodeUTF8))
         self.actionWiFi_Interfaces.setText(QtGui.QApplication.translate("MainWindow", "Show Setting", None, QtGui.QApplication.UnicodeUTF8))
