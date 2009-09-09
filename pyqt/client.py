@@ -19,6 +19,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				# init: variables
 				self.startNcast = 0;
 				self.handoverTime = 30000
+				self.auto_pid = 0;
 				# APs
 				self.ap1 = self.editAP1.text()
 				self.ap2 = self.editAP2.text()
@@ -141,13 +142,14 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				if mode == "Auto":
 						self.cbWifi1.setEnabled(False)
 						self.cbWifi2.setEnabled(False)
-				else:
+				else:				
 						self.OutputText.insertPlainText("Changed to Manual Mode. \n")
 						self.cbWifi1.setEnabled(True)						
 						self.cbWifi2.setCurrentIndex(0)
 						self.cbWifi2.setEnabled(True)
 						# The second wifi by default set as none
 						self.cbWifi2.setCurrentIndex(3)
+						self.auto_pid = 0;
 				self.ButtonStop.setEnabled(False)
 				self.ButtonStart.setEnabled(True)
 			
@@ -218,11 +220,14 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.flush_bicast_state();
 
 		@pyqtSignature('')
-		def on_ButtonStop_clicked(self):
+		def on_ButtonStop_clicked(self):		  
 				self.startNcast = 0;
 				self.OutputText.insertPlainText("Stop clicked\n")
+				if self.auto_pid != 0:
+					os.popen("kill -9 "+str(self.auto_pid))
+					self.auto_pid =0;
 				self.ButtonStop.setEnabled(False)
-				self.ButtonStart.setEnabled(True)
+				self.ButtonStart.setEnabled(True)  
 
 		
 		@pyqtSignature('')
@@ -236,8 +241,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 						if self.wimax_enable:
 								self.demo_auto_with_wimax()
 						else:
-								#thread.start_new_thread(self.demo_auto_without_wimax())
-								self.demo_auto_without_wimax()
+								thread.start_new_thread(self.demo_auto_without_wimax())
+								#self.demo_auto_without_wimax()
 				else:
 						self.OutputText.insertPlainText("Manual Mode\n")
 						self.demo_manual();
@@ -490,6 +495,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
 				self.OutputText.insertPlainText("Bonding IP address: " + self.bonding_ip_address+"\n")
 				self.OutputText.insertPlainText("Starting Demo .....\n");
+
+				self.auto_pid = os.getpid()
 				
 				# Sequence
 				# (ap1, N/A) -> (ap1, ap2) -> (ap3, ap2) -> (ap3, ap1) -> (ap2, ap1) -> (ap2, ap3) -> (ap1, ap3) -> (ap1, N/A)
