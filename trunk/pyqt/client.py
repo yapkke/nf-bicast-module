@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #Todo: Auto mode / flush state
-from PyQt4.QtCore import (QDate, Qt, SIGNAL, pyqtSignature)
-from PyQt4.QtGui import (QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton, QMessageBox)
+from PyQt4.QtCore import * #(QDate, Qt, SIGNAL, pyqtSignature)
+from PyQt4.QtGui import * #(QApplication, QDialog, QDialogButtonBox, QWidget, QMainWindow, QComboBox, QPushButton, QMessageBox)
 from subprocess import *
 import openroad_layout
 import sys, os
@@ -18,6 +18,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.cbMode.setFocus()
 				# init: variables
 				self.startNcast = 0;
+				self.handoverTime = 30000
 				# APs
 				self.ap1 = self.editAP1.text()
 				self.ap2 = self.editAP2.text()
@@ -235,7 +236,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 						if self.wimax_enable:
 								self.demo_auto_with_wimax()
 						else:
-								thread.start_new_thread(self.demo_auto_without_wimax())
+								#thread.start_new_thread(self.demo_auto_without_wimax())
+								self.demo_auto_without_wimax()
 				else:
 						self.OutputText.insertPlainText("Manual Mode\n")
 						self.demo_manual();
@@ -442,76 +444,6 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.OutputText.insertPlainText("Sleep for "+ str(time_s) +" seconds .... \n");
 				time.sleep(time_s)
 		
-		
-		def demo_auto_without_wimax(self):
-				self.device_init()
-				self.OutputText.insertPlainText("Set up Ready.\n");
-				self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
-				self.OutputText.insertPlainText("Bonding IP address: " + self.bonding_ip_address+"\n")
-				self.OutputText.insertPlainText("Starting Demo .....\n");
-				
-				# Sequence
-				# (ap1, N/A) -> (ap1, ap2) -> (ap3, ap2) -> (ap3, ap1) -> (ap2, ap1) -> (ap2, ap3) -> (ap1, ap3) -> (ap1, N/A)
-
-				# wifi1: ap1, wifi2:N/A
-				self.associate_wifi(self.wifi1, self.ap1)	
-				self.change_active_slave(self.wifi1)
-
-				self.sleep_between_handover(90)
-				for i in range(1, 50):
-						print i
-				
-				# wifi1: ap1, wifi2:ap2
-				# ap1 -> ap3 (start bicast)
-				self.associate_wifi(self.wifi2, self.ap2)
-				self.sleep_between_handover(30)
-				
-				# wifi1: ap3, wifi2:ap2
-				self.send_bicast_msg()
-				self.dissociate_wifi(self.wifi1)
-				
-				self.associate_wifi(self.wifi1, self.ap3)
-				self.sleep_between_handover(30)
-				
-				# wifi1: ap3, wifi2:ap1
-				self.send_bicast_msg();
-				self.dissociate_wifi(self.wifi2)
-				
-				self.associate_wifi(self.wifi2, self.ap1)
-				self.sleep_between_handover(30)
-
-				#wifi1: ap2, wifi2:ap1
-				self.send_bicast_msg()
-				self.dissociate_wifi(self.wifi1)
-				
-				self.associate_wifi(self.wifi1, self.ap2)
-				self.sleep_between_handover(30)
-				
-				#wifi1: ap2, wifi2:ap3
-				self.send_bicast_msg()
-				self.dissociate_wifi(self.wifi2)
-				
-				self.associate_wifi(self.wifi2, self.ap3)
-				self.sleep_between_handover(30)
-
-				#wifi1: ap1, wifi2:ap3
-				self.send_bicast_msg()
-				self.dissociate_wifi(self.wifi1)
-				
-				self.associate_wifi(self.wifi1, self.ap1)
-				self.sleep_between_handover(30)
-
-				#wifi1: ap1, wifi2:N/A
-				self.send_bicast_msg()
-				self.dissociate_wifi(self.wifi2)
-				self.change_active_slave(self.wifi1)
-
-				self.sleep_between_handover(60)
-				# Goto step two and repeat
-
-				self.OutputText.insertPlainText("Demo End!\n")
-
-
 		def demo_auto_with_wimax(self):
 				self.device_init()
 				self.OutputText.insertPlainText("Set up Ready.\n");
@@ -552,10 +484,90 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.sleep_between_handover(60)
 				self.OutputText.insertPlainText("Demo End!\n")
 
+		def demo_auto_without_wimax(self):
+				self.device_init()
+				self.OutputText.insertPlainText("Set up Ready.\n");
+				self.OutputText.insertPlainText("Bonding MAC address: "+ self.bonding_mac_address+"\n")
+				self.OutputText.insertPlainText("Bonding IP address: " + self.bonding_ip_address+"\n")
+				self.OutputText.insertPlainText("Starting Demo .....\n");
+				
+				# Sequence
+				# (ap1, N/A) -> (ap1, ap2) -> (ap3, ap2) -> (ap3, ap1) -> (ap2, ap1) -> (ap2, ap3) -> (ap1, ap3) -> (ap1, N/A)
+
+				# wifi1: ap1, wifi2:N/A
+				self.associate_wifi(self.wifi1, self.ap1)	
+				self.change_active_slave(self.wifi1)
+
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s1)
+		
+		def demo_auto_without_wimax_s1(self):
+				# wifi1: ap1, wifi2:ap2
+				self.associate_wifi(self.wifi2, self.ap2)
+				self.change_active_slave(self.wifi2)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s2)
+				# ap1 -> ap3 (start bicast)
+				#self.sleep_between_handover(30)
+				
+		def demo_auto_without_wimax_s2(self):
+				# wifi1: ap3, wifi2:ap2
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi1)
+				self.associate_wifi(self.wifi1, self.ap3)
+				self.change_active_slave(self.wifi1)
+				
+				#self.sleep_between_handover(30)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s3)
+		
+		def demo_auto_without_wimax_s3(self):
+				# wifi1: ap3, wifi2:ap1
+				self.send_bicast_msg();
+				self.dissociate_wifi(self.wifi2)
+				self.associate_wifi(self.wifi2, self.ap1)
+				self.change_active_slave(self.wifi2)
+				#self.sleep_between_handover(30)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s4)
+
+		def demo_auto_without_wimax_s4(self):
+				#wifi1: ap2, wifi2:ap1
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi1)
+				self.associate_wifi(self.wifi1, self.ap2)
+				self.change_active_slave(self.wifi1)
+				#self.sleep_between_handover(30)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s5)
+
+				
+		def demo_auto_without_wimax_s5(self):
+				#wifi1: ap2, wifi2:ap3
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi2)
+				self.associate_wifi(self.wifi2, self.ap3)
+				self.change_active_slave(self.wifi2)
+				#self.sleep_between_handover(30)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s6)
+
+		def demo_auto_without_wimax_s6(self):
+				#wifi1: ap1, wifi2:ap3
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi1)
+				self.associate_wifi(self.wifi1, self.ap1)
+				self.change_active_slave(self.wifi1)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s7)
+				#self.sleep_between_handover(30)
+
+		def demo_auto_without_wimax_s7(self):
+				#wifi1: ap1, wifi2:N/A
+				self.send_bicast_msg()
+				self.dissociate_wifi(self.wifi2)
+				QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s1)
+				#self.change_active_slave(self.wifi1)
+				#self.sleep_between_handover(60)
+				# Goto step two and repeat
+
 
 if __name__ == "__main__":
 		import sys
 		app = QApplication(sys.argv)
-		form = OpenRoadClient()
-		form.show()
+		client = OpenRoadClient()
+		client.show()
 		app.exec_()
