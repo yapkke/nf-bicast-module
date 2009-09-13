@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>719</height>
+    <width>433</width>
+    <height>696</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -16,9 +16,9 @@
    <widget class="QTabWidget" name="settingTab" >
     <property name="geometry" >
      <rect>
-      <x>80</x>
+      <x>15</x>
       <y>310</y>
-      <width>651</width>
+      <width>401</width>
       <height>161</height>
      </rect>
     </property>
@@ -38,7 +38,7 @@
      <widget class="QLineEdit" name="editAP1" >
       <property name="geometry" >
        <rect>
-        <x>300</x>
+        <x>70</x>
         <y>20</y>
         <width>113</width>
         <height>22</height>
@@ -51,7 +51,7 @@
      <widget class="QLabel" name="label_ap1" >
       <property name="geometry" >
        <rect>
-        <x>260</x>
+        <x>30</x>
         <y>23</y>
         <width>31</width>
         <height>17</height>
@@ -64,7 +64,7 @@
      <widget class="QLabel" name="label_ap2" >
       <property name="geometry" >
        <rect>
-        <x>260</x>
+        <x>30</x>
         <y>52</y>
         <width>31</width>
         <height>17</height>
@@ -77,7 +77,7 @@
      <widget class="QLineEdit" name="editAP2" >
       <property name="geometry" >
        <rect>
-        <x>300</x>
+        <x>70</x>
         <y>50</y>
         <width>113</width>
         <height>22</height>
@@ -90,7 +90,7 @@
      <widget class="QLabel" name="label_ap3" >
       <property name="geometry" >
        <rect>
-        <x>260</x>
+        <x>30</x>
         <y>80</y>
         <width>31</width>
         <height>17</height>
@@ -103,7 +103,7 @@
      <widget class="QLineEdit" name="editAP3" >
       <property name="geometry" >
        <rect>
-        <x>300</x>
+        <x>70</x>
         <y>79</y>
         <width>113</width>
         <height>22</height>
@@ -121,8 +121,8 @@
      <widget class="QLabel" name="label_wifi_if_1" >
       <property name="geometry" >
        <rect>
-        <x>179</x>
-        <y>20</y>
+        <x>27</x>
+        <y>21</y>
         <width>131</width>
         <height>20</height>
        </rect>
@@ -134,7 +134,7 @@
      <widget class="QLineEdit" name="editWiFiIF1" >
       <property name="geometry" >
        <rect>
-        <x>320</x>
+        <x>149</x>
         <y>20</y>
         <width>121</width>
         <height>22</height>
@@ -147,7 +147,7 @@
      <widget class="QLineEdit" name="editWiFiIF2" >
       <property name="geometry" >
        <rect>
-        <x>321</x>
+        <x>149</x>
         <y>50</y>
         <width>121</width>
         <height>22</height>
@@ -160,8 +160,8 @@
      <widget class="QLabel" name="label_wifi_if_2" >
       <property name="geometry" >
        <rect>
-        <x>162</x>
-        <y>50</y>
+        <x>10</x>
+        <y>51</y>
         <width>151</width>
         <height>20</height>
        </rect>
@@ -178,7 +178,7 @@
      <widget class="QLabel" name="label_bond_ip" >
       <property name="geometry" >
        <rect>
-        <x>150</x>
+        <x>20</x>
         <y>10</y>
         <width>151</width>
         <height>20</height>
@@ -191,7 +191,7 @@
      <widget class="QLineEdit" name="editBondIP" >
       <property name="geometry" >
        <rect>
-        <x>310</x>
+        <x>180</x>
         <y>10</y>
         <width>121</width>
         <height>22</height>
@@ -204,7 +204,7 @@
      <widget class="QLabel" name="label_bond_mac" >
       <property name="geometry" >
        <rect>
-        <x>212</x>
+        <x>82</x>
         <y>70</y>
         <width>91</width>
         <height>20</height>
@@ -217,7 +217,7 @@
      <widget class="QLineEdit" name="editBondMac" >
       <property name="geometry" >
        <rect>
-        <x>310</x>
+        <x>180</x>
         <y>70</y>
         <width>121</width>
         <height>22</height>
@@ -230,7 +230,7 @@
      <widget class="QLabel" name="label_bond_if" >
       <property name="geometry" >
        <rect>
-        <x>199</x>
+        <x>69</x>
         <y>100</y>
         <width>101</width>
         <height>20</height>
@@ -243,7 +243,7 @@
      <widget class="QLineEdit" name="editBondMacIF" >
       <property name="geometry" >
        <rect>
-        <x>310</x>
+        <x>180</x>
         <y>100</y>
         <width>121</width>
         <height>22</height>
@@ -256,7 +256,7 @@
      <widget class="QLabel" name="label_bond_ip_nowimax" >
       <property name="geometry" >
        <rect>
-        <x>153</x>
+        <x>23</x>
         <y>40</y>
         <width>151</width>
         <height>20</height>
@@ -269,7 +269,7 @@
      <widget class="QLineEdit" name="editBondIP_nowimax" >
       <property name="geometry" >
        <rect>
-        <x>311</x>
+        <x>181</x>
         <y>39</y>
         <width>121</width>
         <height>22</height>
@@ -287,9 +287,9 @@
      <widget class="QLabel" name="label_wimax_if" >
       <property name="geometry" >
        <rect>
-        <x>150</x>
-        <y>22</y>
-        <width>151</width>
+        <x>20</x>
+        <y>12</y>
+        <width>131</width>
         <height>20</height>
        </rect>
       </property>
@@ -300,8 +300,8 @@
      <widget class="QLineEdit" name="editWimaxIF" >
       <property name="geometry" >
        <rect>
-        <x>310</x>
-        <y>20</y>
+        <x>20</x>
+        <y>30</y>
         <width>113</width>
         <height>22</height>
        </rect>
@@ -313,8 +313,8 @@
      <widget class="QCheckBox" name="isUseWiMax" >
       <property name="geometry" >
        <rect>
-        <x>290</x>
-        <y>60</y>
+        <x>20</x>
+        <y>70</y>
         <width>101</width>
         <height>21</height>
        </rect>
@@ -334,8 +334,8 @@
      <widget class="QSpinBox" name="wifiAssoTimeSpinBox" >
       <property name="geometry" >
        <rect>
-        <x>320</x>
-        <y>20</y>
+        <x>20</x>
+        <y>30</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -353,8 +353,8 @@
      <widget class="QLabel" name="label_WifiAssocTime" >
       <property name="geometry" >
        <rect>
-        <x>100</x>
-        <y>21</y>
+        <x>20</x>
+        <y>10</y>
         <width>211</width>
         <height>20</height>
        </rect>
@@ -366,7 +366,7 @@
      <widget class="QLabel" name="label_gw" >
       <property name="geometry" >
        <rect>
-        <x>253</x>
+        <x>20</x>
         <y>50</y>
         <width>61</width>
         <height>20</height>
@@ -379,8 +379,8 @@
      <widget class="QLineEdit" name="editGW" >
       <property name="geometry" >
        <rect>
-        <x>320</x>
-        <y>50</y>
+        <x>20</x>
+        <y>70</y>
         <width>121</width>
         <height>22</height>
        </rect>
@@ -394,9 +394,9 @@
    <widget class="Line" name="line_2" >
     <property name="geometry" >
      <rect>
-      <x>40</x>
+      <x>-5</x>
       <y>510</y>
-      <width>691</width>
+      <width>441</width>
       <height>20</height>
      </rect>
     </property>
@@ -407,7 +407,7 @@
    <widget class="QLabel" name="label_output" >
     <property name="geometry" >
      <rect>
-      <x>360</x>
+      <x>165</x>
       <y>520</y>
       <width>111</width>
       <height>30</height>
@@ -420,7 +420,7 @@
    <widget class="QLabel" name="label_settings" >
     <property name="geometry" >
      <rect>
-      <x>380</x>
+      <x>184</x>
       <y>280</y>
       <width>111</width>
       <height>30</height>
@@ -433,9 +433,9 @@
    <widget class="Line" name="line_3" >
     <property name="geometry" >
      <rect>
-      <x>40</x>
+      <x>-5</x>
       <y>169</y>
-      <width>691</width>
+      <width>421</width>
       <height>20</height>
      </rect>
     </property>
@@ -446,9 +446,9 @@
    <widget class="QLabel" name="label_status" >
     <property name="geometry" >
      <rect>
-      <x>350</x>
-      <y>181</y>
-      <width>141</width>
+      <x>169</x>
+      <y>183</y>
+      <width>111</width>
       <height>20</height>
      </rect>
     </property>
@@ -459,7 +459,7 @@
    <widget class="QLabel" name="label_wifi_status_1" >
     <property name="geometry" >
      <rect>
-      <x>310</x>
+      <x>155</x>
       <y>209</y>
       <width>61</width>
       <height>17</height>
@@ -472,7 +472,7 @@
    <widget class="QLabel" name="label_wifi_status_2" >
     <property name="geometry" >
      <rect>
-      <x>310</x>
+      <x>155</x>
       <y>229</y>
       <width>61</width>
       <height>17</height>
@@ -485,7 +485,7 @@
    <widget class="QLabel" name="label_wimax_status" >
     <property name="geometry" >
      <rect>
-      <x>310</x>
+      <x>155</x>
       <y>249</y>
       <width>61</width>
       <height>17</height>
@@ -498,7 +498,7 @@
    <widget class="QLabel" name="wifi_status_1" >
     <property name="geometry" >
      <rect>
-      <x>390</x>
+      <x>235</x>
       <y>209</y>
       <width>111</width>
       <height>17</height>
@@ -511,7 +511,7 @@
    <widget class="QLabel" name="wifi_status_2" >
     <property name="geometry" >
      <rect>
-      <x>390</x>
+      <x>235</x>
       <y>229</y>
       <width>121</width>
       <height>17</height>
@@ -524,7 +524,7 @@
    <widget class="QLabel" name="wimax_status" >
     <property name="geometry" >
      <rect>
-      <x>390</x>
+      <x>235</x>
       <y>250</y>
       <width>131</width>
       <height>17</height>
@@ -537,9 +537,9 @@
    <widget class="QPlainTextEdit" name="OutputText" >
     <property name="geometry" >
      <rect>
-      <x>80</x>
+      <x>15</x>
       <y>550</y>
-      <width>651</width>
+      <width>401</width>
       <height>101</height>
      </rect>
     </property>
@@ -559,9 +559,9 @@
    <widget class="Line" name="line_4" >
     <property name="geometry" >
      <rect>
-      <x>40</x>
+      <x>-5</x>
       <y>270</y>
-      <width>691</width>
+      <width>421</width>
       <height>20</height>
      </rect>
     </property>
@@ -572,8 +572,8 @@
    <widget class="QComboBox" name="cbMode" >
     <property name="geometry" >
      <rect>
-      <x>210</x>
-      <y>80</y>
+      <x>25</x>
+      <y>70</y>
       <width>75</width>
       <height>27</height>
      </rect>
@@ -592,9 +592,9 @@
    <widget class="QLabel" name="label_control" >
     <property name="geometry" >
      <rect>
-      <x>350</x>
+      <x>165</x>
       <y>10</y>
-      <width>141</width>
+      <width>81</width>
       <height>20</height>
      </rect>
     </property>
@@ -605,8 +605,8 @@
    <widget class="QLabel" name="label_control_2" >
     <property name="geometry" >
      <rect>
-      <x>230</x>
-      <y>50</y>
+      <x>45</x>
+      <y>40</y>
       <width>41</width>
       <height>20</height>
      </rect>
@@ -618,8 +618,8 @@
    <widget class="QLabel" name="label_control_wifi1" >
     <property name="geometry" >
      <rect>
-      <x>360</x>
-      <y>50</y>
+      <x>175</x>
+      <y>40</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -631,8 +631,8 @@
    <widget class="QComboBox" name="cbWifi1" >
     <property name="geometry" >
      <rect>
-      <x>350</x>
-      <y>80</y>
+      <x>165</x>
+      <y>70</y>
       <width>81</width>
       <height>27</height>
      </rect>
@@ -661,8 +661,8 @@
    <widget class="QLabel" name="label_control_wifi2" >
     <property name="geometry" >
      <rect>
-      <x>510</x>
-      <y>50</y>
+      <x>325</x>
+      <y>40</y>
       <width>51</width>
       <height>20</height>
      </rect>
@@ -674,8 +674,8 @@
    <widget class="QComboBox" name="cbWifi2" >
     <property name="geometry" >
      <rect>
-      <x>500</x>
-      <y>80</y>
+      <x>315</x>
+      <y>70</y>
       <width>81</width>
       <height>27</height>
      </rect>
@@ -704,8 +704,8 @@
    <widget class="QPushButton" name="ButtonStop" >
     <property name="geometry" >
      <rect>
-      <x>430</x>
-      <y>130</y>
+      <x>166</x>
+      <y>120</y>
       <width>80</width>
       <height>28</height>
      </rect>
@@ -717,7 +717,7 @@
    <widget class="QPushButton" name="ButtonSet" >
     <property name="geometry" >
      <rect>
-      <x>280</x>
+      <x>95</x>
       <y>480</y>
       <width>80</width>
       <height>28</height>
@@ -730,8 +730,8 @@
    <widget class="QPushButton" name="ButtonStart" >
     <property name="geometry" >
      <rect>
-      <x>280</x>
-      <y>130</y>
+      <x>75</x>
+      <y>120</y>
       <width>80</width>
       <height>28</height>
      </rect>
@@ -743,7 +743,7 @@
    <widget class="QPushButton" name="ButtonFlush" >
     <property name="geometry" >
      <rect>
-      <x>420</x>
+      <x>295</x>
       <y>480</y>
       <width>81</width>
       <height>28</height>
@@ -753,6 +753,19 @@
      <string>Flush NoX</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="ButtonVideo" >
+    <property name="geometry" >
+     <rect>
+      <x>256</x>
+      <y>120</y>
+      <width>80</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>Video</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar" />
   <widget class="QMenuBar" name="menubar" >
@@ -760,7 +773,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>433</width>
      <height>26</height>
     </rect>
    </property>
@@ -768,15 +781,16 @@
     <property name="title" >
      <string>Settings</string>
     </property>
-    <addaction name="actionAP_Settings" />
-    <addaction name="actionWiFi_Interfaces" />
-    <addaction name="separator" />
+    <addaction name="actionDetail" />
    </widget>
    <addaction name="menuSettings" />
   </widget>
-  <action name="actionAP_Settings" >
+  <action name="actionDetail" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
    <property name="text" >
-    <string>Show Debug Message</string>
+    <string>Show Detail</string>
    </property>
   </action>
   <action name="actionWiFi_Interfaces" >
@@ -792,6 +806,14 @@
   <action name="actionWiMAX" >
    <property name="text" >
     <string>WiMAX</string>
+   </property>
+  </action>
+  <action name="actionAaa" >
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="text" >
+    <string>aaa</string>
    </property>
   </action>
  </widget>
