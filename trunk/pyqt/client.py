@@ -257,6 +257,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 						self.resize(433, 300)
 		@pyqtSignature('')
 		def on_ButtonVideo_clicked(self):
+				a=1
 				#subprocess.call(["./client_rtsp.sh"])
 
 		@pyqtSignature('')
