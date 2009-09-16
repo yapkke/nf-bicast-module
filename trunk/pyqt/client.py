@@ -29,6 +29,11 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.auto_thread = AutoThreadwoWimax(self)
 				self.vlc_thread = VLCThread(self)
 				# AP MACs
+				# for mobicom APs
+				#self.ap1_dpid = int("0xdb916ee48", 16);
+				#self.ap2_dpid = int("0xdb916efa4", 16);
+				#self.ap3_dpid = int("0xdb916efd0", 16);				
+				# for backup APs
 				self.ap1_dpid = int("0xdb916f04c", 16);
 				self.ap2_dpid = int("0xdb916efd4", 16);
 				self.ap3_dpid = int("0xdb916f038", 16);				
@@ -426,6 +431,10 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				#set Interface#2
 				self.label_control_wifi2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))
 				self.label_wifi_status_2.setText(QApplication.translate("MainWindow", self.wifi2, None, QApplication.UnicodeUTF8))		
+				#set label for traffic light
+				self.label_light_ap1.setText(QApplication.translate("MainWindow", self.ap1, None, QApplication.UnicodeUTF8))
+				self.label_light_ap2.setText(QApplication.translate("MainWindow", self.ap2, None, QApplication.UnicodeUTF8))
+				self.label_light_ap3.setText(QApplication.translate("MainWindow", self.ap3, None, QApplication.UnicodeUTF8))
 		
 		#currently a useless function :p
 		def updateUi(self):
@@ -809,7 +818,7 @@ class AutoThreadwoWimax(QThread):
 					self.orc.send_bicast_msg();
 					self.orc.dissociate_wifi(self.orc.wifi2)
 				if self.isRunning:
-					QTimer.singleShot(self.handoverTime*1.5, self.demo_auto_without_wimax_s4)
+					QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s4)
 	
 		def demo_auto_without_wimax_s4(self):
 				if self.isRunning:
@@ -830,7 +839,7 @@ class AutoThreadwoWimax(QThread):
 					self.orc.associate_wifi(self.orc.wifi1, self.orc.ap2)
 					self.orc.change_active_slave(self.orc.wifi1)
 				if self.isRunning:
-					QTimer.singleShot(self.handoverTime*1.5, self.demo_auto_without_wimax_s6)
+					QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s6)
 		
 
 		def demo_auto_without_wimax_s6(self):
@@ -874,7 +883,7 @@ class AutoThreadwoWimax(QThread):
 					self.orc.dissociate_wifi(self.orc.wifi2)
 				#time.sleep(30)
 				if self.isRunning:
-					QTimer.singleShot(self.handoverTime*1.5, self.demo_auto_without_wimax_s1)
+					QTimer.singleShot(self.handoverTime, self.demo_auto_without_wimax_s1)
 				#self.change_active_slave(self.wifi1)
 				# Goto step two and repeat
 

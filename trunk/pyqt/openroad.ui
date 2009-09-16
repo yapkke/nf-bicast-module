@@ -1,6 +1,9 @@
 <ui version="4.0" >
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow" >
+  <property name="enabled" >
+   <bool>true</bool>
+  </property>
   <property name="geometry" >
    <rect>
     <x>0</x>
@@ -434,7 +437,7 @@
     <property name="geometry" >
      <rect>
       <x>0</x>
-      <y>150</y>
+      <y>170</y>
       <width>421</width>
       <height>20</height>
      </rect>
@@ -443,46 +446,10 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QLabel" name="label_wifi_status_1" >
-    <property name="geometry" >
-     <rect>
-      <x>145</x>
-      <y>203</y>
-      <width>71</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="font" >
-     <font>
-      <pointsize>14</pointsize>
-     </font>
-    </property>
-    <property name="text" >
-     <string>WiFi #1</string>
-    </property>
-    <property name="scaledContents" >
+   <widget class="QLabel" name="label_wimax_status" >
+    <property name="enabled" >
      <bool>false</bool>
     </property>
-   </widget>
-   <widget class="QLabel" name="label_wifi_status_2" >
-    <property name="geometry" >
-     <rect>
-      <x>145</x>
-      <y>232</y>
-      <width>71</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font" >
-     <font>
-      <pointsize>14</pointsize>
-     </font>
-    </property>
-    <property name="text" >
-     <string>WiFi #2</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_wimax_status" >
     <property name="geometry" >
      <rect>
       <x>146</x>
@@ -501,17 +468,20 @@
     </property>
    </widget>
    <widget class="QLabel" name="wifi_status_1" >
+    <property name="enabled" >
+     <bool>false</bool>
+    </property>
     <property name="geometry" >
      <rect>
-      <x>235</x>
-      <y>204</y>
-      <width>111</width>
+      <x>106</x>
+      <y>80</y>
+      <width>71</width>
       <height>20</height>
      </rect>
     </property>
     <property name="font" >
      <font>
-      <pointsize>14</pointsize>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="text" >
@@ -519,17 +489,20 @@
     </property>
    </widget>
    <widget class="QLabel" name="wifi_status_2" >
+    <property name="enabled" >
+     <bool>false</bool>
+    </property>
     <property name="geometry" >
      <rect>
-      <x>235</x>
-      <y>232</y>
-      <width>121</width>
+      <x>280</x>
+      <y>80</y>
+      <width>61</width>
       <height>20</height>
      </rect>
     </property>
     <property name="font" >
      <font>
-      <pointsize>14</pointsize>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="text" >
@@ -537,6 +510,9 @@
     </property>
    </widget>
    <widget class="QLabel" name="wimax_status" >
+    <property name="enabled" >
+     <bool>false</bool>
+    </property>
     <property name="geometry" >
      <rect>
       <x>236</x>
@@ -592,9 +568,9 @@
    <widget class="QComboBox" name="cbMode" >
     <property name="geometry" >
      <rect>
-      <x>150</x>
+      <x>160</x>
       <y>10</y>
-      <width>131</width>
+      <width>101</width>
       <height>27</height>
      </rect>
     </property>
@@ -606,12 +582,12 @@
     </property>
     <item>
      <property name="text" >
-      <string>Auto Mode</string>
+      <string>Auto</string>
      </property>
     </item>
     <item>
      <property name="text" >
-      <string>Manual Mode</string>
+      <string>Manual</string>
      </property>
     </item>
    </widget>
@@ -619,7 +595,7 @@
     <property name="geometry" >
      <rect>
       <x>90</x>
-      <y>49</y>
+      <y>51</y>
       <width>81</width>
       <height>20</height>
      </rect>
@@ -637,8 +613,8 @@
    <widget class="QComboBox" name="cbWifi1" >
     <property name="geometry" >
      <rect>
-      <x>60</x>
-      <y>70</y>
+      <x>70</x>
+      <y>80</y>
       <width>111</width>
       <height>27</height>
      </rect>
@@ -674,7 +650,7 @@
     <property name="geometry" >
      <rect>
       <x>260</x>
-      <y>49</y>
+      <y>51</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -693,7 +669,7 @@
     <property name="geometry" >
      <rect>
       <x>250</x>
-      <y>70</y>
+      <y>80</y>
       <width>111</width>
       <height>27</height>
      </rect>
@@ -729,7 +705,7 @@
     <property name="geometry" >
      <rect>
       <x>221</x>
-      <y>112</y>
+      <y>130</y>
       <width>80</width>
       <height>30</height>
      </rect>
@@ -760,7 +736,7 @@
     <property name="geometry" >
      <rect>
       <x>121</x>
-      <y>112</y>
+      <y>130</y>
       <width>80</width>
       <height>30</height>
      </rect>
@@ -778,39 +754,105 @@
     <property name="geometry" >
      <rect>
       <x>106</x>
-      <y>170</y>
+      <y>220</y>
       <width>21</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text" >
      <string/>
+    </property>
+    <property name="pixmap" >
+     <pixmap>red-20.gif</pixmap>
     </property>
    </widget>
    <widget class="QLabel" name="light_ap2" >
     <property name="geometry" >
      <rect>
       <x>196</x>
-      <y>170</y>
+      <y>220</y>
       <width>21</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text" >
      <string/>
+    </property>
+    <property name="pixmap" >
+     <pixmap>red-20.gif</pixmap>
     </property>
    </widget>
    <widget class="QLabel" name="light_ap3" >
     <property name="geometry" >
      <rect>
       <x>286</x>
-      <y>170</y>
+      <y>220</y>
       <width>21</width>
       <height>21</height>
      </rect>
     </property>
     <property name="text" >
      <string/>
+    </property>
+    <property name="pixmap" >
+     <pixmap>red-20.gif</pixmap>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_light_ap1" >
+    <property name="geometry" >
+     <rect>
+      <x>83</x>
+      <y>190</y>
+      <width>70</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font" >
+     <font>
+      <family>Rehan</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text" >
+     <string>ordemo1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_light_ap1_2" >
+    <property name="geometry" >
+     <rect>
+      <x>178</x>
+      <y>190</y>
+      <width>70</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font" >
+     <font>
+      <family>Rehan</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text" >
+     <string>ordemo2</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_light_ap1_3" >
+    <property name="geometry" >
+     <rect>
+      <x>270</x>
+      <y>190</y>
+      <width>70</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font" >
+     <font>
+      <family>Rehan</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text" >
+     <string>ordemo3</string>
     </property>
    </widget>
   </widget>
