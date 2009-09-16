@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file './openroad.ui'
 #
-# Created: Tue Sep 15 00:24:10 2009
+# Created: Tue Sep 15 12:58:25 2009
 #      by: PyQt4 UI code generator 4.4.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -185,8 +185,8 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.cbMode.setFont(font)
         self.cbMode.setObjectName("cbMode")
-        self.cbMode.addItem("")
-        self.cbMode.addItem("")
+        self.cbMode.addItem(QtCore.QString())
+        self.cbMode.addItem(QtCore.QString())
         self.label_control_wifi1 = QtGui.QLabel(self.centralwidget)
         self.label_control_wifi1.setGeometry(QtCore.QRect(90, 49, 81, 20))
         font = QtGui.QFont()
@@ -201,10 +201,10 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.cbWifi1.setFont(font)
         self.cbWifi1.setObjectName("cbWifi1")
-        self.cbWifi1.addItem("")
-        self.cbWifi1.addItem("")
-        self.cbWifi1.addItem("")
-        self.cbWifi1.addItem("")
+        self.cbWifi1.addItem(QtCore.QString())
+        self.cbWifi1.addItem(QtCore.QString())
+        self.cbWifi1.addItem(QtCore.QString())
+        self.cbWifi1.addItem(QtCore.QString())
         self.label_control_wifi2 = QtGui.QLabel(self.centralwidget)
         self.label_control_wifi2.setGeometry(QtCore.QRect(260, 49, 91, 20))
         font = QtGui.QFont()
@@ -219,10 +219,10 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.cbWifi2.setFont(font)
         self.cbWifi2.setObjectName("cbWifi2")
-        self.cbWifi2.addItem("")
-        self.cbWifi2.addItem("")
-        self.cbWifi2.addItem("")
-        self.cbWifi2.addItem("")
+        self.cbWifi2.addItem(QtCore.QString())
+        self.cbWifi2.addItem(QtCore.QString())
+        self.cbWifi2.addItem(QtCore.QString())
+        self.cbWifi2.addItem(QtCore.QString())
         self.ButtonStop = QtGui.QPushButton(self.centralwidget)
         self.ButtonStop.setGeometry(QtCore.QRect(221, 112, 80, 30))
         font = QtGui.QFont()
@@ -293,7 +293,7 @@ class Ui_MainWindow(object):
         self.label_bond_ip.setText(QtGui.QApplication.translate("MainWindow", "IP Address with WiMAX", None, QtGui.QApplication.UnicodeUTF8))
         self.editBondIP.setText(QtGui.QApplication.translate("MainWindow", "10.79.1.242", None, QtGui.QApplication.UnicodeUTF8))
         self.label_bond_mac.setText(QtGui.QApplication.translate("MainWindow", "MAC Address ", None, QtGui.QApplication.UnicodeUTF8))
-        self.editBondMac.setText(QtGui.QApplication.translate("MainWindow", "00:1c:f0:ed:98:5a", None, QtGui.QApplication.UnicodeUTF8))
+        self.editBondMac.setText(QtGui.QApplication.translate("MainWindow", "00:1c:f0:ee:5a:cd", None, QtGui.QApplication.UnicodeUTF8))
         self.label_bond_if.setText(QtGui.QApplication.translate("MainWindow", "InterFace Name", None, QtGui.QApplication.UnicodeUTF8))
         self.editBondMacIF.setText(QtGui.QApplication.translate("MainWindow", "bond0", None, QtGui.QApplication.UnicodeUTF8))
         self.label_bond_ip_nowimax.setText(QtGui.QApplication.translate("MainWindow", "IP Address w/o WiMAX", None, QtGui.QApplication.UnicodeUTF8))
@@ -315,8 +315,8 @@ class Ui_MainWindow(object):
         self.wifi_status_1.setText(QtGui.QApplication.translate("MainWindow", "N/A", None, QtGui.QApplication.UnicodeUTF8))
         self.wifi_status_2.setText(QtGui.QApplication.translate("MainWindow", "N/A", None, QtGui.QApplication.UnicodeUTF8))
         self.wimax_status.setText(QtGui.QApplication.translate("MainWindow", "N/A", None, QtGui.QApplication.UnicodeUTF8))
-        self.cbMode.setItemText(0, QtGui.QApplication.translate("MainWindow", "Auto Mode", None, QtGui.QApplication.UnicodeUTF8))
-        self.cbMode.setItemText(1, QtGui.QApplication.translate("MainWindow", "Manual Mode", None, QtGui.QApplication.UnicodeUTF8))
+        self.cbMode.setItemText(0, QtGui.QApplication.translate("MainWindow", "Auto", None, QtGui.QApplication.UnicodeUTF8))
+        self.cbMode.setItemText(1, QtGui.QApplication.translate("MainWindow", "Manual", None, QtGui.QApplication.UnicodeUTF8))
         self.label_control_wifi1.setText(QtGui.QApplication.translate("MainWindow", "WiFi  #1", None, QtGui.QApplication.UnicodeUTF8))
         self.cbWifi1.setItemText(0, QtGui.QApplication.translate("MainWindow", "ordemo1", None, QtGui.QApplication.UnicodeUTF8))
         self.cbWifi1.setItemText(1, QtGui.QApplication.translate("MainWindow", "ordemo2", None, QtGui.QApplication.UnicodeUTF8))

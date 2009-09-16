@@ -224,7 +224,7 @@
        </rect>
       </property>
       <property name="text" >
-       <string>00:1c:f0:ed:98:5a</string>
+       <string>00:1c:f0:ee:5a:cd</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_bond_if" >
