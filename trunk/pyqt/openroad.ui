@@ -464,7 +464,7 @@
      </font>
     </property>
     <property name="text" >
-     <string>WiMax</string>
+     <string>WiMAX</string>
     </property>
    </widget>
    <widget class="QLabel" name="wifi_status_1" >
@@ -613,9 +613,9 @@
    <widget class="QComboBox" name="cbWifi1" >
     <property name="geometry" >
      <rect>
-      <x>70</x>
+      <x>84</x>
       <y>80</y>
-      <width>111</width>
+      <width>91</width>
       <height>27</height>
      </rect>
     </property>
@@ -627,17 +627,17 @@
     </property>
     <item>
      <property name="text" >
-      <string>ordemo1</string>
+      <string>AP1</string>
      </property>
     </item>
     <item>
      <property name="text" >
-      <string>ordemo2</string>
+      <string>AP2</string>
      </property>
     </item>
     <item>
      <property name="text" >
-      <string>ordemo3</string>
+      <string>AP3</string>
      </property>
     </item>
     <item>
@@ -668,9 +668,9 @@
    <widget class="QComboBox" name="cbWifi2" >
     <property name="geometry" >
      <rect>
-      <x>250</x>
+      <x>253</x>
       <y>80</y>
-      <width>111</width>
+      <width>91</width>
       <height>27</height>
      </rect>
     </property>
@@ -682,17 +682,17 @@
     </property>
     <item>
      <property name="text" >
-      <string>ordemo1</string>
+      <string>AP1</string>
      </property>
     </item>
     <item>
      <property name="text" >
-      <string>ordemo2</string>
+      <string>AP2</string>
      </property>
     </item>
     <item>
      <property name="text" >
-      <string>ordemo3</string>
+      <string>AP3</string>
      </property>
     </item>
     <item>
@@ -763,7 +763,7 @@
      <string/>
     </property>
     <property name="pixmap" >
-     <pixmap>red-20.gif</pixmap>
+     <pixmap>black-20.png</pixmap>
     </property>
    </widget>
    <widget class="QLabel" name="light_ap2" >
@@ -779,7 +779,7 @@
      <string/>
     </property>
     <property name="pixmap" >
-     <pixmap>red-20.gif</pixmap>
+     <pixmap>black-20.png</pixmap>
     </property>
    </widget>
    <widget class="QLabel" name="light_ap3" >
@@ -795,13 +795,13 @@
      <string/>
     </property>
     <property name="pixmap" >
-     <pixmap>red-20.gif</pixmap>
+     <pixmap>black-20.png</pixmap>
     </property>
    </widget>
    <widget class="QLabel" name="label_light_ap1" >
     <property name="geometry" >
      <rect>
-      <x>83</x>
+      <x>104</x>
       <y>190</y>
       <width>70</width>
       <height>20</height>
@@ -814,13 +814,13 @@
      </font>
     </property>
     <property name="text" >
-     <string>ordemo1</string>
+     <string>AP1</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_light_ap1_2" >
     <property name="geometry" >
      <rect>
-      <x>178</x>
+      <x>191</x>
       <y>190</y>
       <width>70</width>
       <height>20</height>
@@ -833,13 +833,13 @@
      </font>
     </property>
     <property name="text" >
-     <string>ordemo2</string>
+     <string>AP2</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_light_ap1_3" >
     <property name="geometry" >
      <rect>
-      <x>270</x>
+      <x>280</x>
       <y>190</y>
       <width>70</width>
       <height>20</height>
@@ -852,7 +852,7 @@
      </font>
     </property>
     <property name="text" >
-     <string>ordemo3</string>
+     <string>AP3</string>
     </property>
    </widget>
   </widget>

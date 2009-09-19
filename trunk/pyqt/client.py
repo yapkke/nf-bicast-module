@@ -16,8 +16,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				global redlight
 				global greenlight
 				
-				redlight = QPixmap("red-20.gif")
-				greenlight = QPixmap("green-20.gif")
+				redlight = QPixmap("black-20.png")
+				greenlight = QPixmap("red-20.png")
 
 				super(OpenRoadClient, self).__init__(parent)
 				self.setupUi(self)
@@ -778,7 +778,7 @@ class VLCThread(QThread):
 				self.orc.exe_os_cmd("killall vlc");			
 		def run(self):
 				self.orc.exe_os_cmd("killall vlc");			
-				cvlc_cmd = "cvlc --repeat -f rtsp://%s:8080/test.sdp &" % self.orc.gateway
+				cvlc_cmd = "cvlc --repeat -f --video-x 1024 rtsp://%s:8080/test.sdp &" % self.orc.gateway
 				cmd = "su demo -c \"%s\"" % cvlc_cmd
 				self.orc.exe_os_cmd(cmd)
 
