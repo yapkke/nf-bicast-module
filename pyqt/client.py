@@ -41,6 +41,7 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.ap1 = self.editAP1.text()
 				self.ap2 = self.editAP2.text()
 				self.ap3 = self.editAP3.text()
+				self.ap_map = {'AP1': self.ap1, 'AP2': self.ap2, 'AP3': self.ap3, 'N/A': "N/A"}
 				# WiFi Interfaces
 				self.wifi1 = self.editWiFiIF1.text()
 				self.wifi2 = self.editWiFiIF2.text()
@@ -247,7 +248,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.cbWifi2.setEnabled(True)
 		
 		@pyqtSignature("QString")
-		def on_cbWifi1_currentIndexChanged(self, ap):
+		def on_cbWifi1_currentIndexChanged(self, ap_):
+				ap = self.ap_map[str(ap_)]
 				if self.cbMode.currentText() == "Auto":
 						return
 				#elif self.startNcast == 0:
@@ -290,7 +292,8 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 
 
 		@pyqtSignature("QString")
-		def on_cbWifi2_currentIndexChanged(self, ap):
+		def on_cbWifi2_currentIndexChanged(self, ap_):
+				ap = self.ap_map[str(ap_)]
 				if self.cbMode.currentText() == "Auto":
 						return
 				#elif self.startNcast == 0:
@@ -705,13 +708,13 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.cbWifi2.setEnabled(True)
 				if self.cbWifi1.currentIndex()!=3:
 						#Start from wifi1
-						self.associate_wifi(self.wifi1, self.cbWifi1.currentText())
+						self.associate_wifi(self.wifi1, self.ap_map[str(self.cbWifi1.currentText())])
 						self.change_active_slave(self.wifi1)
 						if self.cbWifi2.currentIndex()!=3:
-								self.associate_wifi(self.wifi2, self.cbWifi2.currentText())
+								self.associate_wifi(self.wifi2, self.ap_map[str(self.cbWifi2.currentText())])
 				elif self.cbWifi2.currentIndex()!=3:
 						#Start from wifi2, wifi1 = "N/A"
-						self.associate_wifi(self.wifi2, self.cbWifi2.currentText())
+						self.associate_wifi(self.wifi2, self.ap_map[str(self.cbWifi2.currentText())])
 						self.change_active_slave(self.wifi2)
 				self.startNcast = 1;
 				self.ButtonStop.setEnabled(True)
