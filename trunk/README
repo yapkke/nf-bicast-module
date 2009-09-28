@@ -1,0 +1,16 @@
+=============
+ Compilation
+=============
+The Makefile included does two things:
+
+1. Compiles the Netfilter bicast module.
+2. Compiles the bicast helper programs for operation. change-active-slave.c requires the SIOCBONDHOOLOCK macro definition - you need to install the Hoolock-enabled bonding driver.
+
+===========
+ Operation
+===========
+The helper programs communicate with the Netfilter module via a device file called nfm_dev. Make sure that is present by executing:
+
+   [sudo] mknod nfm_dev c <NF_MOBILITY_MAJOR_NUM> 0
+
+where NF_MOBILITY_MAJOR_NUM is defined to be 240 in nf_mobility_ioctl.h.
