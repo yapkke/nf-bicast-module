@@ -30,13 +30,13 @@ class OpenRoadClient(QMainWindow, openroad_layout.Ui_MainWindow):
 				self.vlc_thread = VLCThread(self)
 				# AP MACs
 				# for mobicom APs
-				#self.ap1_dpid = int("0xdb916ee48", 16);
-				#self.ap2_dpid = int("0xdb916efa4", 16);
-				#self.ap3_dpid = int("0xdb916efd0", 16);				
+				self.ap1_dpid = int("0xdb916ee48", 16);
+				self.ap2_dpid = int("0xdb916efa4", 16);
+				self.ap3_dpid = int("0xdb916efd0", 16);				
 				# for backup APs
-				self.ap1_dpid = int("0xdb916f04c", 16);
-				self.ap2_dpid = int("0xdb916efd4", 16);
-				self.ap3_dpid = int("0xdb916f038", 16);				
+				#self.ap1_dpid = int("0xdb916f04c", 16);
+				#self.ap2_dpid = int("0xdb916efd4", 16);
+				#self.ap3_dpid = int("0xdb916f038", 16);				
 				# APs
 				self.ap1 = self.editAP1.text()
 				self.ap2 = self.editAP2.text()
