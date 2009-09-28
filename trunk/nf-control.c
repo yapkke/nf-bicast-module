@@ -1,13 +1,6 @@
 /*
 * nf-ioctl.c − the process to use ioctl's to control the kernel module
-*
-* Until now we could have used cat for input and output. But now
-* we need to do ioctl's, which require writing our own process.
 */
-/*
- * * device specifics, such as ioctl numbers and the
- * * major device file.
- * */
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h> /* open */
